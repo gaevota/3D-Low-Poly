@@ -223,9 +223,56 @@
     }
     var hairMesh = new THREE.Mesh(buildShell(variant === 1), hairM);
     head.add(hairMesh);
+
+    /* ---------- Cabelo 3: mechas longas caindo pelas costas ----------
+       Cortina de poucas facetas atrás e nos lados da cabeça. Fica presa ao corpo (não acompanha a
+       inclinação da cabeça), começa por dentro da casca do cabelo e desce até o meio das costas,
+       terminando em pontas. A frente fica livre para aparecerem o rosto e a camiseta. */
+    var LONG_RINGS = [          /* y, meia-largura (x), meia-profundidade (z), centro em z */
+      [7.5, 0.90, 0.90, 0.00],
+      [7.0, 0.96, 0.88, -0.10],
+      [6.5, 0.92, 0.80, -0.18],
+      [6.0, 0.82, 0.62, -0.18],
+      [5.6, 0.74, 0.52, -0.14],
+      [5.2, 0.66, 0.46, -0.12]
+    ];
+    var LONG_SEGS = 8, LONG_ARC = 1.22;     /* ±70° em volta, a partir de bem atrás */
+    function buildLongHair() {
+      rnd = rng(11);
+      var pts = [];
+      for (var r = 0; r < LONG_RINGS.length; r++) {
+        var ring = LONG_RINGS[r], row = [];
+        for (var s = 0; s <= LONG_SEGS; s++) {
+          var th = (s / LONG_SEGS * 2 - 1) * LONG_ARC;       /* 0 = bem atrás */
+          /* última fileira: pontas em dente, uma mecha mais baixa e a vizinha mais alta */
+          var jag = r === LONG_RINGS.length - 1 ? ((s & 1) ? -0.32 : 0.12) : 0;
+          var kk = 1 + noise3(th * 2, ring[0], 1.3) * 0.04;
+          row.push([ring[1] * kk * Math.sin(th), ring[0] + jag, ring[3] - ring[2] * kk * Math.cos(th)]);
+        }
+        pts.push(row);
+      }
+      var lv = [];
+      for (var ra = 0; ra < pts.length - 1; ra++) {
+        for (var sb = 0; sb < LONG_SEGS; sb++) {
+          var p00 = pts[ra][sb], p01 = pts[ra][sb + 1], p10 = pts[ra + 1][sb], p11 = pts[ra + 1][sb + 1];
+          lv.push(p00[0], p00[1], p00[2], p10[0], p10[1], p10[2], p01[0], p01[1], p01[2]);
+          lv.push(p01[0], p01[1], p01[2], p10[0], p10[1], p10[2], p11[0], p11[1], p11[2]);
+        }
+      }
+      var lg = new THREE.BufferGeometry();
+      lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
+      bake(lg, 0xffffff, new THREE.Vector3(0, 6.6, -0.1), 0.06);   /* só claro/escuro; a cor vem do material */
+      return lg;
+    }
+    var longHair = new THREE.Mesh(buildLongHair(), hairM);
+    longHair.visible = false;
+    character.add(longHair);
+
+    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) */
     function setHair(n) {
       hairMesh.geometry.dispose();
       hairMesh.geometry = buildShell(n === 2);
+      longHair.visible = (n === 3);
       result.hair = n;
     }
 
@@ -483,12 +530,15 @@
   function triCount(root) {
     var n = 0;
     root.traverse(function (o) {
-      if (o.isMesh) {
+      if (o.isMesh && o.visible) {          /* peças escondidas (cabelo não escolhido) não contam */
         var g = o.geometry;
         n += g.index ? g.index.count / 3 : g.attributes.position.count / 3;
       }
     });
     return n;
+  }
+  function updateCount() {
+    document.getElementById('count').textContent = nf.format(Math.round(triCount(active.character))) + ' triângulos';
   }
   function selectCharacter(i, focus) {
     active = characters[i];
@@ -503,7 +553,7 @@
     charName.textContent = active.name;
     syncColorUI();
     syncHairUI();
-    document.getElementById('count').textContent = nf.format(Math.round(triCount(active.character))) + ' triângulos';
+    updateCount();
   }
   for (var ci = 0; ci < NUM_CHARACTERS; ci++) {
     (function (i) {
@@ -607,13 +657,13 @@
 
   /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
   var hairPicker = document.getElementById('hairPicker');
-  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2')];
+  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3')];
   function syncHairUI() {
     hairPicker.hidden = (active !== characters[0]);
     btnHair.forEach(function (b, j) { b.setAttribute('aria-pressed', active.hair === j + 1 ? 'true' : 'false'); });
   }
   btnHair.forEach(function (b, j) {
-    b.addEventListener('click', function () { active.setHair(j + 1); syncHairUI(); });
+    b.addEventListener('click', function () { active.setHair(j + 1); syncHairUI(); updateCount(); });
   });
   selectCharacter(0);
 
