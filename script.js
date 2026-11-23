@@ -228,13 +228,20 @@
        Cortina de poucas facetas atrás e nos lados da cabeça. Fica presa ao corpo (não acompanha a
        inclinação da cabeça), começa por dentro da casca do cabelo e desce até o meio das costas,
        terminando em pontas. A frente fica livre para aparecerem o rosto e a camiseta. */
-    var LONG_RINGS = [          /* y, meia-largura (x), meia-profundidade (z), centro em z */
-      [7.5, 0.90, 0.90, 0.00],
-      [7.0, 0.96, 0.88, -0.10],
-      [6.5, 0.92, 0.80, -0.18],
-      [6.0, 0.82, 0.62, -0.18],
-      [5.6, 0.74, 0.52, -0.14],
-      [5.2, 0.66, 0.46, -0.12]
+    /* Perfil de cada fileira: y, meia-largura (x), meia-profundidade (z), centro em z (o fundo fica em centro − profundidade).
+       Começa por dentro da cúpula do cabelo (fundo em −0,90 a −0,93, a cúpula está em −1,0) e só sai
+       por baixo dela, a partir de y ≈ 7,3, quase na tangente, sem degrau. Depois a largura e o fundo
+       vão diminuindo devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5). */
+    var LONG_RINGS = [
+      [7.9, 0.88, 0.85, -0.05],
+      [7.6, 0.88, 0.85, -0.08],
+      [7.3, 0.86, 0.82, -0.08],
+      [7.0, 0.84, 0.78, -0.07],
+      [6.6, 0.82, 0.72, -0.08],
+      [6.2, 0.76, 0.64, -0.10],
+      [5.8, 0.70, 0.56, -0.11],
+      [5.4, 0.64, 0.50, -0.10],
+      [5.0, 0.56, 0.44, -0.10]
     ];
     var LONG_SEGS = 8, LONG_ARC = 1.22;     /* ±70° em volta, a partir de bem atrás */
     function buildLongHair() {
