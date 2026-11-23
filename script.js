@@ -33,10 +33,6 @@
   }
   var DS = THREE.DoubleSide;
   var M = {
-    skin: mat(0xd3c3bb),
-    skinSmooth: mat(0xd3c3bb, { flatShading: false }),
-    skinShade: mat(0xb9a8a3),
-    hairV: mat(0xffffff, { vertexColors: true, side: DS }),
     eye: mat(0x151a17),
     pupil: mat(0x151a17),
     hi: mat(0xffffff, { emissive: 0xffffff }),
@@ -94,6 +90,10 @@
     /* camiseta própria de cada personagem, para a cor poder mudar sem afetar os outros */
     var shirtM = mat(0xffffff), shirtD = mat(0xffffff);
     var shortsM = mat(0xffffff), shoeM = mat(0xffffff, { side: DS });   /* shoeM = cabedal do tênis */
+    /* pele (cabeça lisa, corpo facetado e orelhas um pouco mais escuras) e cabelo: a cor vem do material,
+       as facetas do cabelo só guardam claro/escuro */
+    var skinM = mat(0xffffff), skinSmoothM = mat(0xffffff, { flatShading: false }), skinShadeM = mat(0xffffff);
+    var hairM = mat(0xffffff, { vertexColors: true, side: DS });
     var character = new THREE.Group();    /* pés em y = 0, depois deslocado para centralizar */
     character.position.set(-0.05, -4.6, 0);
 
@@ -111,7 +111,7 @@
       }
       pos.setXYZ(i, x, y, z);
     }
-    var headMesh = new THREE.Mesh(hg, M.skinSmooth);
+    var headMesh = new THREE.Mesh(hg, skinSmoothM);
     head.add(headMesh);
     head.updateMatrixWorld(true);
 
@@ -148,7 +148,7 @@
     head.add(mouth);
     /* orelhas */
     [-1, 1].forEach(function (s) {
-      var ear = ico(0.17, 0, M.skinShade, 0.5, 1, 0.8);
+      var ear = ico(0.17, 0, skinShadeM, 0.5, 1, 0.8);
       ear.position.set(s * 0.93, -0.12, -0.02);
       head.add(ear);
     });
@@ -218,10 +218,10 @@
     }
     var shellGeo = new THREE.BufferGeometry();
     shellGeo.setAttribute('position', new THREE.Float32BufferAttribute(kept, 3));
-    bake(shellGeo, 0x5a4a43, SHELL_C, 0.06);
+    bake(shellGeo, 0xffffff, SHELL_C, 0.06);       /* só claro/escuro; a cor do cabelo vem do material */
     return shellGeo;
     }
-    var hairMesh = new THREE.Mesh(buildShell(variant === 1), M.hairV);
+    var hairMesh = new THREE.Mesh(buildShell(variant === 1), hairM);
     head.add(hairMesh);
     function setHair(n) {
       hairMesh.geometry.dispose();
@@ -235,7 +235,7 @@
     character.add(head);
 
     /* ---------- tronco (camiseta larga) ---------- */
-    character.add(limb([0, 6.7, 0], [0, 7.22, 0.02], 0.24, 0.22, M.skin, 7));
+    character.add(limb([0, 6.7, 0], [0, 7.22, 0.02], 0.24, 0.22, skinM, 7));
 
     var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.0, 2.3, 8, 1), shirtM);
     torso.scale.z = 0.6;
@@ -255,10 +255,10 @@
     function makeHand(s) {
       var g = new THREE.Group();
       var d = -s;                               /* lado da palma no eixo x */
-      var body = ico(1, 1, M.skin, 0.115, 0.4, 0.2);
+      var body = ico(1, 1, skinM, 0.115, 0.4, 0.2);
       body.position.set(0, -0.28, 0);
       g.add(body);
-      var thumb = ico(1, 1, M.skin, 0.06, 0.2, 0.068);
+      var thumb = ico(1, 1, skinM, 0.06, 0.2, 0.068);
       thumb.position.set(d * 0.04, -0.27, 0.22);
       thumb.rotation.x = -0.35;
       g.add(thumb);
@@ -270,7 +270,7 @@
     /* grupo do braço que acena: gira em torno do ombro */
     var armRG = new THREE.Group(); armRG.position.set(S[0], S[1], S[2]); character.add(armRG);
     var armIn = new THREE.Group(); armIn.position.set(-S[0], -S[1], -S[2]); armRG.add(armIn);
-    armIn.add(limb(lerp3(S, H1, 0.07), H1, 0.21, 0.085, M.skin, 7));
+    armIn.add(limb(lerp3(S, H1, 0.07), H1, 0.21, 0.085, skinM, 7));
     armIn.add(limb([0.69, 6.7, 0.0], lerp3(S, E, 0.8), 0.26, 0.38, shirtM, 7));
     var hand1 = makeHand(1);
     hand1.position.set(H1[0], H1[1] + 0.03, H1[2]);
@@ -281,7 +281,7 @@
     var S2 = [-0.7, 6.62, 0.05], E2 = [-0.9, 5.65, 0.05], H2 = [-1.1, 4.4, 0.05];
     var armLG = new THREE.Group(); armLG.position.set(S2[0], S2[1], S2[2]); character.add(armLG);
     var armLIn = new THREE.Group(); armLIn.position.set(-S2[0], -S2[1], -S2[2]); armLG.add(armLIn);
-    armLIn.add(limb(lerp3(S2, H2, 0.07), H2, 0.21, 0.085, M.skin, 7));
+    armLIn.add(limb(lerp3(S2, H2, 0.07), H2, 0.21, 0.085, skinM, 7));
     armLIn.add(limb([-0.69, 6.7, 0.0], lerp3(S2, E2, 0.8), 0.26, 0.38, shirtM, 7));
     var hand2 = makeHand(-1);
     hand2.position.set(H2[0], H2[1] + 0.03, H2[2]);
@@ -308,7 +308,7 @@
 
       /* pernas */
       var hipP = [s * 0.42, 3.6, 0], ankle = [s * 0.46, 0.7, 0];
-      legIn.add(limb(hipP, ankle, 0.26, 0.14, M.skin, 8));
+      legIn.add(limb(hipP, ankle, 0.26, 0.14, skinM, 8));
 
       /* meia larga com a boca dobrada */
       legIn.add(limb([s * 0.46, 0.2, 0], [s * 0.46, 1.4, 0], 0.235, 0.25, M.sock, 8));
@@ -445,23 +445,28 @@
     });
 
     var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs,
-                   parts: {                       /* peças que mudam de cor: material principal (+ um tom mais escuro, se houver) */
-                     shirt: { main: shirtM, dark: shirtD, hex: null },      /* a gola usa o tom escuro */
-                     shorts: { main: shortsM, dark: null, hex: null },
-                     shoes: { main: shoeM, dark: null, hex: null }
+                   parts: {                       /* peças que mudam de cor: materiais principais + os de tom mais escuro (k = quanto escurece) */
+                     shirt: { main: [shirtM], dark: [shirtD], k: 0.72, hex: null },    /* a gola usa o tom escuro */
+                     shorts: { main: [shortsM], dark: [], hex: null },
+                     shoes: { main: [shoeM], dark: [], hex: null },
+                     skin: { main: [skinM, skinSmoothM], dark: [skinShadeM], k: 0.87, hex: null },   /* as orelhas usam o tom escuro */
+                     hair: { main: [hairM], dark: [], hex: null }
                    },
                    hair: variant === 1 ? 2 : 1, setHair: setHair };
     Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
     return result;
   }
 
-  /* cor de uma peça: o tom principal vem do hex; o tom escuro (gola) é o mesmo, mais escuro */
-  var PART_DEFAULT = { shirt: '#1b1b20', shorts: '#1b1b20', shoes: '#1b1b20' };   /* tudo preto */
+  /* cor de uma peça: o tom principal vem do hex; o tom escuro (gola, orelhas) é o mesmo, mais escuro */
+  var PART_DEFAULT = {
+    shirt: '#1b1b20', shorts: '#1b1b20', shoes: '#1b1b20',      /* roupas pretas */
+    skin: '#d3c3bb', hair: '#5a4a43'                              /* pele e cabelo como eram antes */
+  };
   function setPartColor(c, part, hex) {
     var p = c.parts[part];
     p.hex = hex;
-    p.main.color.set(hex);
-    if (p.dark) p.dark.color.set(hex).multiplyScalar(0.72);
+    p.main.forEach(function (m) { m.color.set(hex); });
+    p.dark.forEach(function (m) { m.color.set(hex).multiplyScalar(p.k); });
   }
 
   /* ---------- personagens (abas) ----------
@@ -537,12 +542,21 @@
   });
 
   /* ---------- cor da camiseta, do shorts e do tênis (cada personagem tem as suas) ---------- */
-  var SHIRT_COLORS = [
+  var CLOTH_COLORS = [
     ['Azul-marinho', '#2f3366'], ['Vermelho', '#b3333a'], ['Laranja', '#d9772b'], ['Amarelo', '#e0b92f'],
     ['Verde', '#3f8a55'], ['Turquesa', '#2f9aa3'], ['Roxo', '#7a45a8'], ['Rosa', '#d9739c'],
     ['Branco', '#e9e9ee'], ['Cinza', '#7d7f8c'], ['Preto', '#1b1b20']
   ];
-  var PARTS = [['shirt', 'Camiseta'], ['shorts', 'Shorts'], ['shoes', 'Tênis']];
+  /* cada peça tem a sua paleta: roupas usam as cores acima; pele e cabelo, tons próprios */
+  var PALETTES = {
+    shirt: CLOTH_COLORS, shorts: CLOTH_COLORS, shoes: CLOTH_COLORS,
+    skin: [['Muito clara', '#f3d9c8'], ['Clara', '#e8c4aa'], ['Bege', '#d3c3bb'], ['Média', '#c99a78'],
+           ['Morena', '#a8714f'], ['Escura', '#7a4b32'], ['Muito escura', '#4a2e20']],
+    hair: [['Preto', '#1b1b20'], ['Castanho escuro', '#3a2a24'], ['Castanho', '#5a4a43'], ['Castanho claro', '#8a6a4a'],
+           ['Loiro', '#d8b56a'], ['Ruivo', '#a8432a'], ['Grisalho', '#9a9aa4'], ['Branco', '#e9e9ee'],
+           ['Rosa', '#d9739c'], ['Azul', '#3f6fd0'], ['Roxo', '#7a45a8'], ['Verde', '#3f8a55']]
+  };
+  var PARTS = [['shirt', 'Camiseta'], ['shorts', 'Shorts'], ['shoes', 'Tênis'], ['skin', 'Pele'], ['hair', 'Cabelo']];
   var curPart = 'shirt';                 /* peça que o seletor está pintando */
   var partBox = document.getElementById('partBtns');
   var colorBox = document.getElementById('colorSwatches');
@@ -566,23 +580,29 @@
     b.setAttribute('data-part', pt[0]);
     b.setAttribute('aria-pressed', 'false');
     b.textContent = pt[1];
-    b.addEventListener('click', function () { curPart = pt[0]; syncColorUI(); });
+    b.addEventListener('click', function () { curPart = pt[0]; buildSwatches(); syncColorUI(); });
     partBox.appendChild(b);
     partBtns.push(b);
   });
-  SHIRT_COLORS.forEach(function (sc) {
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'swatch';
-    b.setAttribute('data-hex', sc[1]);
-    b.setAttribute('aria-label', 'Cor ' + sc[0].toLowerCase());
-    b.setAttribute('aria-pressed', 'false');
-    b.title = sc[0];
-    b.style.backgroundColor = sc[1];
-    b.addEventListener('click', function () { applyColor(sc[1]); });
-    colorBox.appendChild(b);
-    swatchBtns.push(b);
-  });
+  /* refaz os botões de cor com a paleta da peça escolhida */
+  function buildSwatches() {
+    colorBox.innerHTML = '';
+    swatchBtns = [];
+    PALETTES[curPart].forEach(function (sc) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.setAttribute('data-hex', sc[1]);
+      b.setAttribute('aria-label', 'Cor ' + sc[0].toLowerCase());
+      b.setAttribute('aria-pressed', 'false');
+      b.title = sc[0];
+      b.style.backgroundColor = sc[1];
+      b.addEventListener('click', function () { applyColor(sc[1]); });
+      colorBox.appendChild(b);
+      swatchBtns.push(b);
+    });
+  }
+  buildSwatches();
   colorCustom.addEventListener('input', function () { applyColor(colorCustom.value); });
 
   /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
@@ -688,8 +708,7 @@
     Object.keys(M).forEach(function (n) { M[n].wireframe = on; });
     characters.forEach(function (c) {
       Object.keys(c.parts).forEach(function (k) {
-        c.parts[k].main.wireframe = on;
-        if (c.parts[k].dark) c.parts[k].dark.wireframe = on;
+        c.parts[k].main.concat(c.parts[k].dark).forEach(function (m) { m.wireframe = on; });
       });
     });
   });
