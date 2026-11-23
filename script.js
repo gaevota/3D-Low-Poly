@@ -307,7 +307,7 @@
       var g = new THREE.Group();
       var d = -s;                               /* lado da palma no eixo x */
       var body = ico(1, 2, skinSmoothM, 0.115, 0.4, 0.2);
-      body.position.set(0, -0.28, 0);
+      body.position.set(s * 0.03, -0.28, 0);   /* bem de leve para fora, longe do corpo */
       g.add(body);
       return g;
     }
