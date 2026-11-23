@@ -536,7 +536,7 @@
     if (playing) {
       /* no jogo, arrastar gira a câmera em volta da personagem */
       camYaw -= (e.clientX - drag.x) * 0.008;
-      camPitch = clamp(camPitch + (e.clientY - drag.y) * 0.005, 0.05, 1.2);
+      camPitch = clamp(camPitch + (e.clientY - drag.y) * 0.005, PITCH_MIN, PITCH_MAX);
     } else {
       yaw += (e.clientX - drag.x) * 0.008;
       pitch = clamp(pitch + (e.clientY - drag.y) * 0.005, -0.5, 0.6);
@@ -664,6 +664,9 @@
   var pl = { x: 0, y: 0, vy: 0, z: 8, face: Math.PI };   /* posição, altura do pulo e direção que a personagem olha */
   var JUMP_V = 16, GRAVITY = 42;            /* pulo de cerca de 3 unidades de altura, ~0,76 s no ar */
   var camYaw = 0, camPitch = 0.4;
+  /* camPitch > ORBIT_MIN: a câmera sobe e olha para baixo. Abaixo disso ela fica baixa e só
+     inclina o olhar para cima (até PITCH_MIN), para dar para ver o teto e a lâmpada. */
+  var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.1;
   var keys = {}, moving = false, sprint = false;
   var MOVE_KEYS = {
     KeyW: 1, KeyA: 1, KeyS: 1, KeyD: 1,
@@ -673,7 +676,7 @@
   var menu = document.getElementById('menuJogo');
   var btnPlay = document.getElementById('btnPlay');
   var VIEW_LABEL = canvas.getAttribute('aria-label');
-  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular e arraste para girar a câmera.';
+  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse ou use as setas para girar a câmera e olhar para cima, até o teto.';
 
   function setPlayUI(on) {
     document.getElementById('viewerBtns').hidden = on;
@@ -840,8 +843,13 @@
       pl.y += pl.vy * dt;
       if (pl.y <= 0) { pl.y = 0; pl.vy = 0; }
     }
-    var f = ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
-    var r = ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
+    /* setas giram a câmera: esquerda/direita em volta da personagem, cima/baixo para olhar para cima/baixo */
+    var ky = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
+    var kp = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
+    camYaw -= ky * 1.9 * dt;
+    camPitch = clamp(camPitch + kp * 1.4 * dt, PITCH_MIN, PITCH_MAX);
+    var f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
+    var r = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
     sprint = !!(keys.ShiftLeft || keys.ShiftRight);
     var sy = Math.sin(camYaw), cy = Math.cos(camYaw);
     var dx = -sy * f + cy * r;
@@ -860,7 +868,9 @@
   /* câmera em terceira pessoa: orbita a personagem e nunca sai da sala */
   function applyPlayCamera() {
     var dist = 22 * zoomCur;
-    var cp = Math.cos(camPitch), sp = Math.sin(camPitch);
+    var orbit = Math.max(camPitch, ORBIT_MIN);
+    var lookUp = Math.max(0, ORBIT_MIN - camPitch);   /* quanto inclinar o olhar para cima */
+    var cp = Math.cos(orbit), sp = Math.sin(orbit);
     var tx = pl.x, ty = 5.2 + pl.y * 0.6, tz = pl.z;   /* a câmera acompanha o pulo pela metade */
     var hx = ROOM_W / 2 - 0.6, hz = ROOM_D / 2 - 0.6;
     camera.position.set(
@@ -869,6 +879,7 @@
       clamp(tz + Math.cos(camYaw) * cp * dist, -hz, hz)
     );
     camera.lookAt(tx, ty, tz);
+    if (lookUp > 0) camera.rotateX(lookUp);
   }
 
   var last = performance.now();
