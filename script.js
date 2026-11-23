@@ -599,8 +599,8 @@
   scene.add(room);
 
   M.floor = mat(0xffffff, { vertexColors: true });
-  M.wall = mat(0xd8d2de, { side: DS });
-  M.ceiling = mat(0xeeeaf2, { side: DS });
+  M.wall = mat(0xe6e1ec, { side: DS });
+  M.ceiling = mat(0xf5f2f9, { side: DS });
   M.lampCord = mat(0x2a2a30);
   M.lampShade = mat(0xe9e2d0, { side: DS });
   M.bulb = new THREE.MeshBasicMaterial({ color: 0xfff2c4 });
@@ -611,7 +611,7 @@
     g.rotateX(-Math.PI / 2);
     var p = g.attributes.position;
     var col = new Float32Array(p.count * 3);
-    var ca = new THREE.Color(0x8d8896), cb = new THREE.Color(0x77727f);
+    var ca = new THREE.Color(0xa6a1af), cb = new THREE.Color(0x908b99);
     for (var f = 0; f < p.count; f += 3) {
       var cx = (p.getX(f) + p.getX(f + 1) + p.getX(f + 2)) / 3;
       var cz = (p.getZ(f) + p.getZ(f + 1) + p.getZ(f + 2)) / 3;
@@ -654,25 +654,26 @@
   var bulb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), M.bulb);
   bulb.position.y = -1.75;
   lamp.add(bulb);
-  var lampLight = new THREE.PointLight(0xfff0d0, 1.3, 70, 1.2);
+  var lampLight = new THREE.PointLight(0xfff0d0, 1.15, 90, 1);
   lampLight.position.set(0, ROOM_H - 1.9, 0);
   room.add(lampLight);
 
   /* ---------- jogo: botão, menu de ambientes e controles ---------- */
   var LIM_X = ROOM_W / 2 - 2.2, LIM_Z = ROOM_D / 2 - 2.2;   /* limite dos pés da personagem */
   var WALK_SPEED = 8, RUN_SPEED = 15;
-  var pl = { x: 0, z: 8, face: Math.PI };   /* posição e direção que a personagem olha */
+  var pl = { x: 0, y: 0, vy: 0, z: 8, face: Math.PI };   /* posição, altura do pulo e direção que a personagem olha */
+  var JUMP_V = 16, GRAVITY = 42;            /* pulo de cerca de 3 unidades de altura, ~0,76 s no ar */
   var camYaw = 0, camPitch = 0.4;
   var keys = {}, moving = false, sprint = false;
   var MOVE_KEYS = {
     KeyW: 1, KeyA: 1, KeyS: 1, KeyD: 1,
     ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1,
-    ShiftLeft: 1, ShiftRight: 1
+    ShiftLeft: 1, ShiftRight: 1, Space: 1
   };
   var menu = document.getElementById('menuJogo');
   var btnPlay = document.getElementById('btnPlay');
   var VIEW_LABEL = canvas.getAttribute('aria-label');
-  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr e arraste para girar a câmera.';
+  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular e arraste para girar a câmera.';
 
   function setPlayUI(on) {
     document.getElementById('viewerBtns').hidden = on;
@@ -695,7 +696,7 @@
     menu.hidden = true;
     playing = true;
     keys = {}; moving = false; sprint = false;
-    pl.x = 0; pl.z = 8; pl.face = Math.PI;     /* de costas para a câmera */
+    pl.x = 0; pl.y = 0; pl.vy = 0; pl.z = 8; pl.face = Math.PI;     /* de costas para a câmera */
     camYaw = 0; camPitch = 0.4;
     zoom = 1; zoomCur = 1;
     walking = false; running = false; syncGait();
@@ -707,7 +708,7 @@
     c.rotation.order = 'YXZ';                  /* gira o corpo no eixo vertical antes de inclinar */
     c.position.set(pl.x, 0, pl.z);
     VIEW_LIGHTS.forEach(function (l) { l[0].intensity = 0; });
-    hemi.intensity = 0.3;                      /* só a lâmpada ilumina, com um pouco de luz ambiente */
+    hemi.intensity = 0.65;                     /* luz ambiente da sala + a lâmpada no teto */
     setPlayUI(true);
     canvas.focus();
   }
@@ -798,7 +799,7 @@
       if (full) setFull(false);
     }
   }
-  btnFull.addEventListener('click', toggleFullscreen);
+  btnFull.addEventListener('click', function () { toggleFullscreen(); canvas.focus(); });
   document.addEventListener('fullscreenchange', onFsChange);
   document.addEventListener('webkitfullscreenchange', onFsChange);
 
@@ -824,11 +825,21 @@
     }
     if (MOVE_KEYS[e.code]) { keys[e.code] = true; e.preventDefault(); }
   });
-  window.addEventListener('keyup', function (e) { delete keys[e.code]; });
+  window.addEventListener('keyup', function (e) {
+    delete keys[e.code];
+    if (playing && e.code === 'Space') e.preventDefault();   /* não "clica" no botão focado */
+  });
   window.addEventListener('blur', function () { keys = {}; });
 
   /* W/A/S/D andam em relação à câmera: W afasta da câmera, S aproxima, A esquerda, D direita */
   function updatePlay(dt) {
+    /* pulo: Espaço no chão dá o impulso; a gravidade traz de volta (dá para andar no ar) */
+    if (keys.Space && pl.y === 0 && pl.vy === 0) pl.vy = JUMP_V;
+    if (pl.y > 0 || pl.vy > 0) {
+      pl.vy -= GRAVITY * dt;
+      pl.y += pl.vy * dt;
+      if (pl.y <= 0) { pl.y = 0; pl.vy = 0; }
+    }
     var f = ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
     var r = ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
     sprint = !!(keys.ShiftLeft || keys.ShiftRight);
@@ -850,7 +861,7 @@
   function applyPlayCamera() {
     var dist = 22 * zoomCur;
     var cp = Math.cos(camPitch), sp = Math.sin(camPitch);
-    var tx = pl.x, ty = 5.2, tz = pl.z;
+    var tx = pl.x, ty = 5.2 + pl.y * 0.6, tz = pl.z;   /* a câmera acompanha o pulo pela metade */
     var hx = ROOM_W / 2 - 0.6, hz = ROOM_D / 2 - 0.6;
     camera.position.set(
       clamp(tx + Math.sin(camYaw) * cp * dist, -hx, hx),
@@ -891,7 +902,7 @@
     a.legs.forEach(function (l) { l.g.rotation.x = l.s * sw * la; });
     a.armLG.rotation.x = sw * aa;
     a.armRG.rotation.x = waveT0 >= 0 ? 0 : -sw * aa;
-    a.character.position.y = (playing ? 0 : -4.6) - 3.9 * (1 - Math.cos(la * Math.abs(sw)));
+    a.character.position.y = (playing ? pl.y : -4.6) - 3.9 * (1 - Math.cos(la * Math.abs(sw)));
     if (playing) {
       a.character.position.x = pl.x;
       a.character.position.z = pl.z;
