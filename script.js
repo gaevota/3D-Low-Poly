@@ -305,6 +305,17 @@
     collar.scale.set(1, 1, 1);
     character.add(collar);
 
+    /* Corpo feminino (botão "Feminino"): busto discreto por baixo da camiseta, no mesmo material dela.
+       Fica escondido até a opção ser ligada. */
+    var bust = new THREE.Group();
+    [-1, 1].forEach(function (sd) {
+      var bm = ico(0.27, 1, shirtM, 1, 0.95, 0.85);
+      bm.position.set(sd * 0.27, 6.0, 0.28);
+      bust.add(bm);
+    });
+    bust.visible = false;
+    character.add(bust);
+
 
     /* ---------- mão simples low poly: luva de uma peça só + polegar ----------
        Origem no pulso, dedos para baixo; a palma olha para o corpo.
@@ -509,7 +520,8 @@
                      skin: { main: [skinM, skinSmoothM], dark: [skinShadeM], k: 0.87, hex: null },   /* as orelhas usam o tom escuro */
                      hair: { main: [hairM], dark: [], hex: null }
                    },
-                   hair: variant === 1 ? 2 : 1, setHair: setHair };
+                   hair: variant === 1 ? 2 : 1, setHair: setHair,
+                   feminine: false, setFeminine: function (on) { bust.visible = !!on; result.feminine = !!on; } };
     Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
     return result;
   }
@@ -563,6 +575,7 @@
     charName.textContent = active.name;
     syncColorUI();
     syncHairUI();
+    syncBodyUI();
     updateCount();
   }
   for (var ci = 0; ci < NUM_CHARACTERS; ci++) {
@@ -674,6 +687,15 @@
   }
   btnHair.forEach(function (b, j) {
     b.addEventListener('click', function () { active.setHair(j + 1); syncHairUI(); updateCount(); });
+  });
+
+  /* ---------- corpo: opção "Feminino" ---------- */
+  var btnFem = document.getElementById('btnFem');
+  function syncBodyUI() { btnFem.setAttribute('aria-pressed', active.feminine ? 'true' : 'false'); }
+  btnFem.addEventListener('click', function () {
+    active.setFeminine(!active.feminine);
+    syncBodyUI();
+    updateCount();
   });
   selectCharacter(0);
 
