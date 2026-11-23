@@ -145,8 +145,8 @@ button[aria-selected="true"] {
 }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .tab { min-height: 34px; }
-/* Opção de cabelo e de corpo */
-.hair, .shape { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* Opção de cabelo */
+.hair { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* Cor da camiseta, do shorts e do tênis */
 .colors { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
 .parts { display: flex; flex-wrap: wrap; gap: 6px; }
