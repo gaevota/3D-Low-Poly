@@ -536,7 +536,7 @@
     if (playing) {
       /* no jogo, arrastar gira a câmera em volta da personagem */
       camYaw -= (e.clientX - drag.x) * 0.008;
-      camPitch = clamp(camPitch + (e.clientY - drag.y) * 0.005, PITCH_MIN, PITCH_MAX);
+      camPitch = clamp(camPitch + (e.clientY - drag.y) * 0.005, pitchMin(), PITCH_MAX);
     } else {
       yaw += (e.clientX - drag.x) * 0.008;
       pitch = clamp(pitch + (e.clientY - drag.y) * 0.005, -0.5, 0.6);
@@ -664,9 +664,15 @@
   var pl = { x: 0, y: 0, vy: 0, z: 8, face: Math.PI };   /* posição, altura do pulo e direção que a personagem olha */
   var JUMP_V = 16, GRAVITY = 42;            /* pulo de cerca de 3 unidades de altura, ~0,76 s no ar */
   var camYaw = 0, camPitch = 0.4;
-  /* camPitch > ORBIT_MIN: a câmera sobe e olha para baixo. Abaixo disso ela fica baixa e só
-     inclina o olhar para cima (até PITCH_MIN), para dar para ver o teto e a lâmpada. */
-  var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.1;
+  /* Duas vistas (teclas 1 e 2 ou botões):
+     Vista 1 = câmera em terceira pessoa de antes: orbita a personagem sempre olhando para ela
+               (camPitch de ORBIT_MIN até PITCH_MAX); as setas andam como W A S D.
+     Vista 2 = vista da sala: abaixo de ORBIT_MIN a câmera fica baixa e só inclina o olhar para
+               cima (até PITCH_MIN), para ver as paredes, o teto e a lâmpada; as setas giram a câmera. */
+  var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.05;
+  var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4;     /* inclinação ao trocar de vista */
+  var camView = 1;
+  function pitchMin() { return camView === 2 ? PITCH_MIN : ORBIT_MIN; }
   var keys = {}, moving = false, sprint = false;
   var MOVE_KEYS = {
     KeyW: 1, KeyA: 1, KeyS: 1, KeyD: 1,
@@ -676,8 +682,17 @@
   var menu = document.getElementById('menuJogo');
   var btnPlay = document.getElementById('btnPlay');
   var VIEW_LABEL = canvas.getAttribute('aria-label');
-  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse ou use as setas para girar a câmera e olhar para cima, até o teto.';
+  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse para girar a câmera. As teclas 1 e 2 trocam a vista; na vista 2, as setas e o mouse olham para cima, até o teto.';
 
+  var HINT_V1 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · arraste para girar a câmera · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
+  var HINT_V2 = 'W A S D para andar · Shift para correr · Espaço para pular · setas ou arraste giram a câmera e olham o teto · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
+  function setView(n) {
+    camView = n;
+    camPitch = n === 2 ? VIEW2_PITCH : VIEW1_PITCH;
+    document.getElementById('btnView1').setAttribute('aria-pressed', n === 1 ? 'true' : 'false');
+    document.getElementById('btnView2').setAttribute('aria-pressed', n === 2 ? 'true' : 'false');
+    document.getElementById('playHint').textContent = n === 2 ? HINT_V2 : HINT_V1;
+  }
   function setPlayUI(on) {
     document.getElementById('viewerBtns').hidden = on;
     document.getElementById('viewerHint').hidden = on;
@@ -700,7 +715,7 @@
     playing = true;
     keys = {}; moving = false; sprint = false;
     pl.x = 0; pl.y = 0; pl.vy = 0; pl.z = 8; pl.face = Math.PI;     /* de costas para a câmera */
-    camYaw = 0; camPitch = 0.4;
+    camYaw = 0; setView(1);
     zoom = 1; zoomCur = 1;
     walking = false; running = false; syncGait();
     waveT0 = -1;
@@ -806,6 +821,9 @@
   document.addEventListener('fullscreenchange', onFsChange);
   document.addEventListener('webkitfullscreenchange', onFsChange);
 
+  document.getElementById('btnView1').addEventListener('click', function () { setView(1); canvas.focus(); });
+  document.getElementById('btnView2').addEventListener('click', function () { setView(2); canvas.focus(); });
+
   btnPlay.addEventListener('click', openMenu);
   document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);
   document.getElementById('btnExit').addEventListener('click', stopGame);
@@ -821,6 +839,8 @@
       return;
     }
     if (!playing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.code === 'Digit1' || e.code === 'Numpad1') { setView(1); e.preventDefault(); return; }
+    if (e.code === 'Digit2' || e.code === 'Numpad2') { setView(2); e.preventDefault(); return; }
     if (e.code === 'KeyF') {
       if (!e.repeat) toggleFullscreen();
       e.preventDefault();
@@ -843,13 +863,17 @@
       pl.y += pl.vy * dt;
       if (pl.y <= 0) { pl.y = 0; pl.vy = 0; }
     }
-    /* setas giram a câmera: esquerda/direita em volta da personagem, cima/baixo para olhar para cima/baixo */
-    var ky = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
-    var kp = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
-    camYaw -= ky * 1.9 * dt;
-    camPitch = clamp(camPitch + kp * 1.4 * dt, PITCH_MIN, PITCH_MAX);
-    var f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
-    var r = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
+    var cam2 = camView === 2;
+    if (cam2) {
+      /* vista 2: setas giram a câmera (esquerda/direita em volta, cima/baixo olham para cima/baixo) */
+      var ky = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
+      var kp = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
+      camYaw -= ky * 1.9 * dt;
+      camPitch = clamp(camPitch + kp * 1.4 * dt, PITCH_MIN, PITCH_MAX);
+    }
+    /* vista 1: as setas andam como W A S D */
+    var f = ((keys.KeyW || (!cam2 && keys.ArrowUp)) ? 1 : 0) - ((keys.KeyS || (!cam2 && keys.ArrowDown)) ? 1 : 0);
+    var r = ((keys.KeyD || (!cam2 && keys.ArrowRight)) ? 1 : 0) - ((keys.KeyA || (!cam2 && keys.ArrowLeft)) ? 1 : 0);
     sprint = !!(keys.ShiftLeft || keys.ShiftRight);
     var sy = Math.sin(camYaw), cy = Math.cos(camYaw);
     var dx = -sy * f + cy * r;
