@@ -497,7 +497,7 @@
       legIn.add(shoe);
     });
 
-    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, handBaseQ: handBaseQ, handUp: handUp, legs: legs,
+    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, handBaseQ: handBaseQ, handUp: handUp, handX: H1[0], legs: legs,
                    parts: {                       /* peças que mudam de cor: materiais principais + os de tom mais escuro (k = quanto escurece) */
                      shirt: { main: [shirtM], dark: [shirtD], k: 0.72, hex: null },    /* a gola usa o tom escuro */
                      shorts: { main: [shortsM], dark: [], hex: null },
@@ -1111,6 +1111,7 @@
     var a = active;
     a.armRG.rotation.z = wz;
     a.hand1.quaternion.setFromAxisAngle(a.handUp, wt * Math.PI / 2).multiply(a.handBaseQ);
+    a.hand1.position.x = a.handX + 0.03 * (1 - wt);   /* afastamento só em repouso: no aceno a mão fica centrada no antebraço */
     var gaitOn = playing ? moving : (walking || running);
     var runOn = playing ? (moving && sprint) : running;
     walkK += ((gaitOn ? 1 : 0) - walkK) * Math.min(1, dt * 6);
