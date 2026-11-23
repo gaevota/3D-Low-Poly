@@ -460,9 +460,9 @@
   }
 
   /* ---------- personagens (abas) ----------
-     Cria os 5 personagens (todos cópias da mesma menina), mostra um por vez
-     e monta as abas "Personagem 1..5". */
-  var NUM_CHARACTERS = 5;
+     Cria os personagens, mostra um por vez e monta as abas "Personagem 1..N".
+     Por enquanto só existe o Personagem 1. */
+  var NUM_CHARACTERS = 1;
   var characters = [];
   var active = null;
   var tabList = document.getElementById('personagens');
@@ -515,6 +515,11 @@
     })(ci);
   }
   stage.setAttribute('role', 'tabpanel');
+  /* com um personagem só, as abas não têm o que escolher */
+  if (NUM_CHARACTERS === 1) {
+    document.getElementById('personagens-label').hidden = true;
+    tabList.hidden = true;
+  }
   tabList.addEventListener('keydown', function (e) {
     var i = tabBtns.indexOf(document.activeElement);
     if (i < 0) return;
