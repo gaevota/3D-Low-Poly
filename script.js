@@ -184,7 +184,7 @@
     }
     /* casca: esfera de poucas faces, aberta embaixo e com uma janela para o rosto */
     /* longBang = true gera o "Cabelo 2" (franja comprida); false gera o "Cabelo 1" */
-    function buildShell(longBang) {
+    function buildShell(longBang, noSideTips) {
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
     var sp = shellSrc.attributes.position;
@@ -195,7 +195,9 @@
       var cz = (sp.getZ(fi) + sp.getZ(fi + 1) + sp.getZ(fi + 2)) / 3;
       var bottomOpen = cy < -0.72;
       var faceWindow = cz > 0.5 && cy > -0.8 && cy < 0.42 && Math.abs(cx) < 0.58;
-      if (bottomOpen || faceWindow) continue;
+      /* Cabelo 3: as duas facetas dos lados (x ≈ ±0,71, z ≈ 0) descem até y = −0,85 e aparecem como dois triângulos ao lado do pescoço */
+      var sideTip = noSideTips && Math.abs(cx) > 0.65 && Math.abs(cz) < 0.1 && cy < -0.5;
+      if (bottomOpen || faceWindow || sideTip) continue;
       for (var q = 0; q < 3; q++) {
         var vx = sp.getX(fi + q), vy = sp.getY(fi + q), vz = sp.getZ(fi + q);
         /* Personagem 2, franja: o vértice do cabelo que forma o "bico" no meio da testa
@@ -258,8 +260,6 @@
       var lv = [];
       for (var ra = 0; ra < pts.length - 1; ra++) {
         for (var sb = 0; sb < LONG_SEGS; sb++) {
-          /* sem as facetas das pontas laterais logo abaixo da cabeça (y 7,0 a 6,6): apareciam como dois triângulos ao lado do pescoço */
-          if (ra === 3 && (sb === 0 || sb === LONG_SEGS - 1)) continue;
           var p00 = pts[ra][sb], p01 = pts[ra][sb + 1], p10 = pts[ra + 1][sb], p11 = pts[ra + 1][sb + 1];
           lv.push(p00[0], p00[1], p00[2], p10[0], p10[1], p10[2], p01[0], p01[1], p01[2]);
           lv.push(p01[0], p01[1], p01[2], p10[0], p10[1], p10[2], p11[0], p11[1], p11[2]);
@@ -277,7 +277,7 @@
     /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) */
     function setHair(n) {
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(n === 2);
+      hairMesh.geometry = buildShell(n === 2, n === 3);
       longHair.visible = (n === 3);
       result.hair = n;
     }
