@@ -452,7 +452,7 @@
   }
 
   /* cor da camiseta: o tom principal vem do hex; a gola usa o mesmo tom, mais escuro */
-  var SHIRT_DEFAULT = '#2f3366';
+  var SHIRT_DEFAULT = '#1b1b20';   /* preto */
   function setShirtColor(c, hex) {
     c.shirtHex = hex;
     c.shirt.color.set(hex);
