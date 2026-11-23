@@ -714,6 +714,7 @@
   function stopGame() {
     playing = false;
     keys = {}; moving = false; sprint = false;
+    if (fsElement()) exitFs();
     var c = active.character;
     rig.add(c);                                /* volta para o visualizador */
     c.rotation.set(0, 0, 0);
@@ -726,6 +727,29 @@
     setPlayUI(false);
     btnPlay.focus();
   }
+
+  /* tela cheia: a página inteira, para o menu e os botões continuarem funcionando */
+  var fsRoot = document.documentElement;
+  var btnFull = document.getElementById('btnFull');
+  function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  function enterFs() {
+    var req = fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen;
+    if (!req) return;
+    var p = req.call(fsRoot);
+    if (p && p.catch) p.catch(function () {});
+  }
+  function exitFs() {
+    var ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (!ex) return;
+    var p = ex.call(document);
+    if (p && p.catch) p.catch(function () {});
+  }
+  function toggleFullscreen() { if (fsElement()) exitFs(); else enterFs(); }
+  function syncFull() { btnFull.setAttribute('aria-pressed', fsElement() ? 'true' : 'false'); }
+  btnFull.hidden = !(fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen);   /* ex.: iPhone não oferece */
+  btnFull.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', syncFull);
+  document.addEventListener('webkitfullscreenchange', syncFull);
 
   btnPlay.addEventListener('click', openMenu);
   document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);
@@ -742,6 +766,11 @@
       return;
     }
     if (!playing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.code === 'KeyF') {
+      if (!e.repeat) toggleFullscreen();
+      e.preventDefault();
+      return;
+    }
     if (MOVE_KEYS[e.code]) { keys[e.code] = true; e.preventDefault(); }
   });
   window.addEventListener('keyup', function (e) { delete keys[e.code]; });
