@@ -13,7 +13,7 @@
   var canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', 'Modelo 3D low poly de corpo inteiro de uma menina de cabelo castanho volumoso em facetas, camiseta larga, bermuda preta com listras, meias brancas e tênis, com mãos simples de cinco dedos. Use as setas para girar.');
+  canvas.setAttribute('aria-label', 'Modelo 3D low poly de corpo inteiro de uma menina de cabelo castanho volumoso em facetas, camiseta larga, bermuda preta com listras, meias brancas e tênis, com mãos simples e lisas, sem dedos. Use as setas para girar.');
   stage.appendChild(canvas);
 
   var scene = new THREE.Scene();
@@ -300,7 +300,7 @@
     character.add(collar);
 
 
-    /* ---------- mão simples low poly: luva de uma peça só + polegar ----------
+    /* ---------- mão simples low poly: luva de uma peça só, sem dedos ----------
        Origem no pulso, dedos para baixo; a palma olha para o corpo.
        s = +1 mão direita (x positivo), s = -1 mão esquerda. */
     function makeHand(s) {
@@ -309,10 +309,6 @@
       var body = ico(1, 2, skinSmoothM, 0.115, 0.4, 0.2);
       body.position.set(0, -0.28, 0);
       g.add(body);
-      var thumb = ico(1, 2, skinSmoothM, 0.06, 0.2, 0.068);
-      thumb.position.set(d * 0.04, -0.27, 0.22);
-      thumb.rotation.x = -0.35;
-      g.add(thumb);
       return g;
     }
 
