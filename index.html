@@ -192,16 +192,12 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     hi: mat(0xffffff, { emissive: 0xffffff }),
     lid: mat(0x3e343e),
     mouth: mat(0x8a5a5a),
-    clip: mat(0xf2f2f2),
     shorts: mat(0x1b1a1f),
     stripe: mat(0xe6e6ec),
     sock: mat(0xe4e4e8),
-    shoeBlack: mat(0x1f1e23),
     shoeWhite: mat(0xe9e9e4),
     shoeUpper: mat(0x1f1e23, { side: DS }),
-    shoeRim: mat(0x303038, { side: DS }),
-    shoeOut: mat(0x8d8d96),
-    plinth: mat(0x4a4b5c)
+    shoeOut: mat(0x8d8d96)
   };
 
   function rng(seed) {
@@ -288,11 +284,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     lid.position.z += 0.03;
     head.add(lid);
   });
-  /* nariz e boca */
-  var np = surf(0, -0.22);
-  var nose = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 3), M.skinShade);
-  nose.rotation.x = Math.PI / 2;
-  nose.position.set(np.x, np.y, np.z - 0.02);
+  /* boca */
   var mp = surf(0, -0.52);
   var mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.035, 0.04), M.mouth);
   mouth.position.set(mp.x, mp.y, mp.z + 0.015);
@@ -361,92 +353,6 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   bake(shellGeo, 0x5a4a43, SHELL_C, 0.06);
   head.add(new THREE.Mesh(shellGeo, M.hairV));
 
-  /* lâmina: prisma achatado com a ponta para baixo, base na origem */
-  function shard(w, h, t, hex) {
-    var a = [-w / 2, 0, t / 2], b = [w / 2, 0, t / 2], c = [0, 0, -t / 2], tip = [0, -h, 0];
-    var v = [].concat(a, b, tip, b, c, tip, c, a, tip, a, c, b);
-    var g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
-    bake(g, hex, new THREE.Vector3(0, -h * 0.35, 0), 0.08);
-    return new THREE.Mesh(g, M.hairV);
-  }
-  /* ponto sobre a casca: azimute (0 = frente), elevação, e afastamento k */
-  function shellPt(phiDeg, elevDeg, k) {
-    var p = phiDeg * Math.PI / 180, e = elevDeg * Math.PI / 180;
-    return new THREE.Vector3(
-      1.12 * Math.cos(e) * Math.sin(p) * k,
-      0.08 + 1.2 * Math.sin(e) * k,
-      -0.06 + 1.12 * Math.cos(e) * Math.cos(p) * k
-    );
-  }
-  function place(s, pt, phi, tilt, splay) {
-    s.position.copy(pt);
-    s.rotation.order = 'YXZ';
-    s.rotation.set(-tilt, phi, splay);
-    head.add(s);
-  }
-  var HC1 = 0x65534b, HC2 = 0x4e3f39, HC3 = 0x45372f;
-
-  /* franja em cortina: curta no meio, mais longa nas laterais */
-  /* franja reta de uma peça só: faixa curva com a barra reta */
-  var fv = [];
-  var fTop = [], fBot = [];
-  [-50, -30, -10, 10, 30, 50].forEach(function (deg) {
-    var tp = shellPt(deg, 34, 1.03);
-    fTop.push(tp);
-    fBot.push(new THREE.Vector3(tp.x * 1.04, 0.12, tp.z * 1.04 + 0.02));
-  });
-  for (var fq = 0; fq < fTop.length - 1; fq++) {
-    var t0 = fTop[fq], t1 = fTop[fq + 1], b0 = fBot[fq], b1 = fBot[fq + 1];
-    fv.push(t0.x, t0.y, t0.z, t1.x, t1.y, t1.z, b0.x, b0.y, b0.z);
-    fv.push(t1.x, t1.y, t1.z, b1.x, b1.y, b1.z, b0.x, b0.y, b0.z);
-  }
-  var fringeGeo = new THREE.BufferGeometry();
-  fringeGeo.setAttribute('position', new THREE.Float32BufferAttribute(fv, 3));
-  bake(fringeGeo, HC1, new THREE.Vector3(0, 0.3, -0.5), 0.06);
-  /* mechas laterais até a altura do queixo */
-  [].forEach(function (deg) {
-    var s = shard(0.55, 1.15, 0.12, HC2);
-    place(s, shellPt(deg, 8, 1.02), deg * Math.PI / 180, 0.06, -Math.sign(deg) * 0.22);
-  });
-  /* pontas em lâmina na barra do cabelo */
-  for (var a = 0.95; a < 0; a += 0.55) {
-    var sh = shard(0.6, 0.5, 0.1, (Math.round(a * 10) % 2) ? HC1 : HC3);
-    sh.position.set(Math.sin(a) * 0.84, -0.76, -0.06 + Math.cos(a) * 0.84);
-    sh.rotation.order = 'YXZ';
-    sh.rotation.set(-0.22, a, 0);
-    head.add(sh);
-  }
-  /* camada longa atrás, até os ombros */
-  for (var b2 = 2.0; b2 < 0; b2 += 0.6) {
-    var sb = shard(0.68, 0.75, 0.12, (Math.round(b2 * 10) % 2) ? HC2 : HC3);
-    sb.position.set(Math.sin(b2) * 0.8, -0.7, -0.06 + Math.cos(b2) * 0.8);
-    sb.rotation.order = 'YXZ';
-    sb.rotation.set(-0.3, b2, 0);
-    head.add(sb);
-  }
-  /* tufos no topo */
-  var DOWN = new THREE.Vector3(0, -1, 0);
-  for (var t = 0; t < 0; t++) {
-    var th = 0.2 + rnd() * 0.6, ph = rnd() * Math.PI * 2;
-    var nrm = new THREE.Vector3(Math.sin(th) * Math.sin(ph), Math.cos(th), Math.sin(th) * Math.cos(ph)).normalize();
-    var st = shard(0.32, 0.4 + rnd() * 0.3, 0.09, t % 2 ? HC1 : HC2);
-    st.position.set(nrm.x * 1.12 * 0.97, 0.08 + nrm.y * 1.2 * 0.97, -0.06 + nrm.z * 1.12 * 0.97);
-    st.quaternion.setFromUnitVectors(DOWN, nrm);
-    head.add(st);
-  }
-  /* topete fino */
-  var ahoge = shard(0.16, 0.85, 0.07, 0x6a574d);
-  ahoge.position.set(0.1, 1.2, 0.05);
-  ahoge.quaternion.setFromUnitVectors(DOWN, new THREE.Vector3(0.2, 1, 0.35).normalize());
-  /* presilha */
-  var cp = shellPt(55, 42, 1.05);
-  var cn = cp.clone().sub(SHELL_C).normalize();
-  var clipMesh = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.09, 0.05), M.clip);
-  clipMesh.position.copy(cp);
-  clipMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), cn);
-  clipMesh.rotateZ(-0.6);
-
   head.position.set(0, HEAD_Y, 0.05);
   head.rotation.set(0.2, 0.1, -0.06);
   head.scale.setScalar(0.92);
@@ -459,9 +365,6 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   torso.scale.z = 0.6;
   torso.position.y = 5.55;          /* de 4,4 a 6,7 */
   character.add(torso);
-
-  var shoulders = ico(1, 1, M.shirt, 1.05, 0.32, 0.68);
-  shoulders.position.y = 6.55;
 
   var collar = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.045, 5, 10), M.shirtDark);
   collar.rotation.x = Math.PI / 2;
@@ -512,33 +415,28 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   var bodyRoot = character;
   var legs = [];
   /* ---------- bermuda, pernas, meias e tênis ---------- */
-  var hip = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.0, 0.6, 8, 1), M.shorts);
-  hip.scale.z = 0.6;
-  hip.position.y = 4.2;
-
   [-1, 1].forEach(function (s) {
     /* cada perna fica num grupo que gira em torno do quadril (para andar) */
     var legG = new THREE.Group(); legG.position.set(s * 0.42, 4.0, 0); bodyRoot.add(legG);
     var legIn = new THREE.Group(); legIn.position.set(-s * 0.42, -4.0, 0); legG.add(legIn);
     legs.push({ g: legG, s: s });
-    var character = legIn;
     /* bermuda: um cano por perna, com a listra branca na lateral */
     var sl = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.56, 1.1, 8, 1), M.shorts);
     sl.scale.z = 0.85;
     sl.position.set(s * 0.42, 3.85, 0);   /* de 3,3 a 4,4 */
-    character.add(sl);
+    legIn.add(sl);
     /* listra colada na lateral da bermuda, inclinada para acompanhar o cano que alarga embaixo */
     var stripe = box(0.05, 1.12, 0.1, M.stripe, s * 0.92, 3.85, 0);
     stripe.rotation.z = s * 0.09;
-    character.add(stripe);
+    legIn.add(stripe);
 
     /* pernas */
-    var hipP = [s * 0.42, 3.6, 0], knee = [s * 0.4, 2.45, 0.04], ankle = [s * 0.46, 0.7, 0];
-    character.add(limb(hipP, ankle, 0.26, 0.14, M.skin, 8));
+    var hipP = [s * 0.42, 3.6, 0], ankle = [s * 0.46, 0.7, 0];
+    legIn.add(limb(hipP, ankle, 0.26, 0.14, M.skin, 8));
 
     /* meia larga com a boca dobrada */
-    character.add(limb([s * 0.46, 0.2, 0], [s * 0.46, 1.4, 0], 0.235, 0.25, M.sock, 8));
-    character.add(limb([s * 0.46, 1.25, 0], [s * 0.46, 1.55, 0], 0.29, 0.3, M.sock, 8));
+    legIn.add(limb([s * 0.46, 0.2, 0], [s * 0.46, 1.4, 0], 0.235, 0.25, M.sock, 8));
+    legIn.add(limb([s * 0.46, 1.25, 0], [s * 0.46, 1.55, 0], 0.29, 0.3, M.sock, 8));
 
     /* tênis */
     var shoe = new THREE.Group();
@@ -600,36 +498,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     heelGeo.setAttribute('position', new THREE.Float32BufferAttribute(hv, 3));
     heelGeo.computeVertexNormals();
     shoe.add(new THREE.Mesh(heelGeo, M.shoeUpper));
-    var plate = new THREE.Shape();
-    var plPts = [];
-    HZ.forEach(function (z, i) { plPts.push([HW[i] * HT, z]); });
-    for (var pi = HZ.length - 1; pi >= 0; pi--) plPts.push([-HW[pi] * HT, HZ[pi]]);
-    plPts.forEach(function (p, i) { if (i) plate.lineTo(p[0], -p[1]); else plate.moveTo(p[0], -p[1]); });
-    var holePts = [];
-    for (var hk = 0; hk < 8; hk++) {
-      var ha = hk * Math.PI / 4;
-      holePts.push(new THREE.Vector2(0.27 * Math.sin(ha), -0.27 * Math.cos(ha)));
-    }
-    var hole = new THREE.Path(holePts);
-    hole.closePath && hole.closePath();
-    plate.holes.push(hole);
-    var plateGeo = new THREE.ExtrudeGeometry(plate, { depth: 0.04, bevelEnabled: false });
-    plateGeo.rotateX(-Math.PI / 2);
-    var plateMesh = new THREE.Mesh(plateGeo, M.shoeUpper);
-    plateMesh.position.y = HH - 0.02;
-    /* a chapa plana com furo foi trocada pelo declive do cabedal acima */
 
-    /* cano em volta do tornozelo, com a borda acolchoada */
-    var collar = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.285, 0.58, 8, 1, true), M.shoeUpper);
-    collar.position.set(0, 0.46, 0);
-    var rim = new THREE.Mesh(new THREE.TorusGeometry(0.275, 0.035, 4, 8), M.shoeRim);
-    rim.rotation.x = Math.PI / 2;
-    rim.position.set(0, 0.75, 0);
-    /* lingueta atrás do cadarço e puxador no calcanhar */
-    var tongue = box(0.28, 0.28, 0.07, M.shoeRim, 0, 0.68, 0.31);
-    tongue.rotation.x = -0.35;
-    var tab = box(0.14, 0.2, 0.05, M.shoeRim, 0, 0.74, -0.42);
-    tab.rotation.x = 0.2;
     /* topo do tênis: o próprio cabedal sobe em declive das laterais e do peito do pé até abraçar a meia */
     var OL = [[0, 0.5, -0.36], [-0.1805, 0.5, -0.36], [-0.285, 0.5, -0.28], [-0.309, 0.5, -0.10], [-0.318, 0.5, 0.05],
               [-0.2945, 0.5, 0.22], [-0.14, 0.655, 0.34], [0, 0.655, 0.34], [0.14, 0.655, 0.34], [0.2945, 0.5, 0.22],
@@ -696,12 +565,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       lace.rotation.x = Math.atan2(a - b, 0.08);
       shoe.add(lace);
     });
-    character.add(shoe);
+    legIn.add(shoe);
   });
-
-  /* base */
-  var plinth = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.4, 0.3, 8, 1), M.plinth);
-  plinth.position.y = -0.15;
 
   /* ---------- contagem de triângulos ---------- */
   var tris = 0;
