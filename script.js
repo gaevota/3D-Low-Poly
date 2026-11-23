@@ -317,7 +317,7 @@
     /* grupo do braço que acena: gira em torno do ombro */
     var armRG = new THREE.Group(); armRG.position.set(S[0], S[1], S[2]); character.add(armRG);
     var armIn = new THREE.Group(); armIn.position.set(-S[0], -S[1], -S[2]); armRG.add(armIn);
-    armIn.add(limb(lerp3(S, H1, 0.07), H1, 0.19, 0.077, skinM, 7));
+    armIn.add(limb(lerp3(S, H1, 0.07), lerp3(S, H1, 1.11), 0.19, 0.077, skinM, 7));
     armIn.add(limb([0.69, 6.7, 0.0], lerp3(S, E, 0.8), 0.26, 0.38, shirtM, 7));
     var hand1 = makeHand(1);
     hand1.position.set(H1[0] + 0.03, H1[1] + 0.03, H1[2]);   /* bem de leve para fora, longe do corpo */
@@ -333,7 +333,7 @@
     var S2 = [-0.7, 6.62, 0.05], E2 = [-0.9, 5.65, 0.05], H2 = [-1.1, 4.4, 0.05];
     var armLG = new THREE.Group(); armLG.position.set(S2[0], S2[1], S2[2]); character.add(armLG);
     var armLIn = new THREE.Group(); armLIn.position.set(-S2[0], -S2[1], -S2[2]); armLG.add(armLIn);
-    armLIn.add(limb(lerp3(S2, H2, 0.07), H2, 0.19, 0.077, skinM, 7));
+    armLIn.add(limb(lerp3(S2, H2, 0.07), lerp3(S2, H2, 1.11), 0.19, 0.077, skinM, 7));
     armLIn.add(limb([-0.69, 6.7, 0.0], lerp3(S2, E2, 0.8), 0.26, 0.38, shirtM, 7));
     var hand2 = makeHand(-1);
     hand2.position.set(H2[0] - 0.03, H2[1] + 0.03, H2[2]);
