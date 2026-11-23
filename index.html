@@ -21,7 +21,7 @@
     <div class="count" id="count">Contando triângulos…</div>
   </header>
 
-  <div class="tabs-bar">
+  <div class="tabs-bar" id="tabsBar">
     <span class="tabs-title" id="personagens-label">Personagens</span>
     <div class="tabs" id="personagens" role="tablist" aria-labelledby="personagens-label"></div>
   </div>
@@ -29,7 +29,8 @@
   <div id="stage"></div>
 
   <footer>
-    <div class="btns">
+    <div class="btns" id="viewerBtns">
+      <button type="button" id="btnPlay" class="primary">Jogar</button>
       <button type="button" id="btnWave">Acenar</button>
       <button type="button" id="btnWalk" aria-pressed="false">Andar</button>
       <button type="button" id="btnRun" aria-pressed="false">Correr</button>
@@ -39,8 +40,22 @@
       <button type="button" id="btnOut" aria-label="Afastar">Afastar</button>
       <button type="button" id="btnReset">Recentralizar</button>
     </div>
-    <span class="hint">Arraste para girar · role para aproximar</span>
+    <span class="hint" id="viewerHint">Arraste para girar · role para aproximar</span>
+    <div class="btns" id="playBtns" hidden>
+      <button type="button" id="btnExit">Sair</button>
+    </div>
+    <span class="hint" id="playHint" hidden>W A S D para andar · Shift para correr · arraste para girar a câmera · Esc para sair</span>
   </footer>
+</div>
+
+<div class="overlay" id="menuJogo" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="menuTitulo">
+    <h2 id="menuTitulo">Escolha o ambiente</h2>
+    <div class="env-list">
+      <button type="button" class="env" data-env="sala-vazia">Sala vazia</button>
+    </div>
+    <button type="button" id="btnCloseMenu">Cancelar</button>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

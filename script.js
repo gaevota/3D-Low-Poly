@@ -20,10 +20,12 @@
   var camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
 
   /* ---------- luzes (suaves para a pele não estourar) ---------- */
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8aa0, 0.62));
+  var hemi = new THREE.HemisphereLight(0xffffff, 0x8a8aa0, 0.62); scene.add(hemi);
   var key = new THREE.DirectionalLight(0xfff4ea, 0.7); key.position.set(3, 8, 7); scene.add(key);
   var fill = new THREE.DirectionalLight(0xb8c4ff, 0.3); fill.position.set(-6, 3, 3); scene.add(fill);
   var rim = new THREE.DirectionalLight(0x9fb4ff, 0.35); rim.position.set(-4, 4, -6); scene.add(rim);
+  /* intensidades do visualizador, para restaurar ao sair do jogo */
+  var VIEW_LIGHTS = [[hemi, 0.62], [key, 0.7], [fill, 0.3], [rim, 0.35]];
 
   /* ---------- materiais ---------- */
   function mat(c, o) {
@@ -498,6 +500,7 @@
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var auto = !reduce;
   var drag = null;
+  var playing = false;                  /* true enquanto estiver dentro do ambiente de jogo */
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function applyCamera() {
@@ -526,12 +529,18 @@
   canvas.addEventListener('pointerdown', function (e) {
     drag = { x: e.clientX, y: e.clientY };
     try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
-    if (auto) { auto = false; syncSpin(); }
+    if (auto && !playing) { auto = false; syncSpin(); }
   });
   canvas.addEventListener('pointermove', function (e) {
     if (!drag) return;
-    yaw += (e.clientX - drag.x) * 0.008;
-    pitch = clamp(pitch + (e.clientY - drag.y) * 0.005, -0.5, 0.6);
+    if (playing) {
+      /* no jogo, arrastar gira a câmera em volta da personagem */
+      camYaw -= (e.clientX - drag.x) * 0.008;
+      camPitch = clamp(camPitch + (e.clientY - drag.y) * 0.005, 0.05, 1.2);
+    } else {
+      yaw += (e.clientX - drag.x) * 0.008;
+      pitch = clamp(pitch + (e.clientY - drag.y) * 0.005, -0.5, 0.6);
+    }
     drag.x = e.clientX; drag.y = e.clientY;
   });
   function endDrag() { drag = null; }
@@ -542,6 +551,7 @@
     zoom = clamp(zoom * Math.exp(e.deltaY * 0.001), 0.4, 1.7);
   }, { passive: false });
   canvas.addEventListener('keydown', function (e) {
+    if (playing) return;                /* no jogo, as teclas são tratadas em window */
     var used = true;
     if (e.key === 'ArrowLeft') yaw -= 0.15;
     else if (e.key === 'ArrowRight') yaw += 0.15;
@@ -580,11 +590,202 @@
     yaw = START_YAW; pitch = START_PITCH; zoom = 1;
   });
 
+  /* ---------- modo jogo: ambiente "Sala vazia" ----------
+     Chão (xadrez), 4 paredes e teto com uma lâmpada pendurada que ilumina a sala.
+     O piso fica em y = 0, então os pés da personagem ficam em y = 0. */
+  var ROOM_W = 40, ROOM_D = 40, ROOM_H = 18;
+  var room = new THREE.Group();
+  room.visible = false;
+  scene.add(room);
+
+  M.floor = mat(0xffffff, { vertexColors: true });
+  M.wall = mat(0xd8d2de, { side: DS });
+  M.ceiling = mat(0xeeeaf2, { side: DS });
+  M.lampCord = mat(0x2a2a30);
+  M.lampShade = mat(0xe9e2d0, { side: DS });
+  M.bulb = new THREE.MeshBasicMaterial({ color: 0xfff2c4 });
+
+  /* chão: grade 10x10 com cada casa de um tom, para dar noção de movimento */
+  (function () {
+    var g = new THREE.PlaneGeometry(ROOM_W, ROOM_D, 10, 10).toNonIndexed();
+    g.rotateX(-Math.PI / 2);
+    var p = g.attributes.position;
+    var col = new Float32Array(p.count * 3);
+    var ca = new THREE.Color(0x8d8896), cb = new THREE.Color(0x77727f);
+    for (var f = 0; f < p.count; f += 3) {
+      var cx = (p.getX(f) + p.getX(f + 1) + p.getX(f + 2)) / 3;
+      var cz = (p.getZ(f) + p.getZ(f + 1) + p.getZ(f + 2)) / 3;
+      var par = (Math.floor((cx + ROOM_W / 2) / (ROOM_W / 10)) + Math.floor((cz + ROOM_D / 2) / (ROOM_D / 10))) & 1;
+      var c = par ? ca : cb;
+      for (var j = 0; j < 3; j++) {
+        col[(f + j) * 3] = c.r; col[(f + j) * 3 + 1] = c.g; col[(f + j) * 3 + 2] = c.b;
+      }
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    room.add(new THREE.Mesh(g, M.floor));
+  })();
+
+  /* paredes (viradas para dentro) e teto */
+  function wall(w, x, z, ry) {
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(w, ROOM_H), M.wall);
+    m.position.set(x, ROOM_H / 2, z);
+    m.rotation.y = ry;
+    room.add(m);
+  }
+  wall(ROOM_W, 0, -ROOM_D / 2, 0);
+  wall(ROOM_W, 0, ROOM_D / 2, Math.PI);
+  wall(ROOM_D, -ROOM_W / 2, 0, Math.PI / 2);
+  wall(ROOM_D, ROOM_W / 2, 0, -Math.PI / 2);
+  var ceil = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D), M.ceiling);
+  ceil.rotation.x = Math.PI / 2;
+  ceil.position.y = ROOM_H;
+  room.add(ceil);
+
+  /* lâmpada: fio, cúpula, bulbo aceso e uma luz de ponto no mesmo lugar */
+  var lamp = new THREE.Group();
+  lamp.position.set(0, ROOM_H, 0);
+  room.add(lamp);
+  var cord = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 6), M.lampCord);
+  cord.position.y = -0.6;
+  lamp.add(cord);
+  var shade = new THREE.Mesh(new THREE.ConeGeometry(0.85, 0.7, 8, 1, true), M.lampShade);
+  shade.position.y = -1.55;
+  lamp.add(shade);
+  var bulb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), M.bulb);
+  bulb.position.y = -1.75;
+  lamp.add(bulb);
+  var lampLight = new THREE.PointLight(0xfff0d0, 1.3, 70, 1.2);
+  lampLight.position.set(0, ROOM_H - 1.9, 0);
+  room.add(lampLight);
+
+  /* ---------- jogo: botão, menu de ambientes e controles ---------- */
+  var LIM_X = ROOM_W / 2 - 2.2, LIM_Z = ROOM_D / 2 - 2.2;   /* limite dos pés da personagem */
+  var WALK_SPEED = 8, RUN_SPEED = 15;
+  var pl = { x: 0, z: 8, face: Math.PI };   /* posição e direção que a personagem olha */
+  var camYaw = 0, camPitch = 0.4;
+  var keys = {}, moving = false, sprint = false;
+  var MOVE_KEYS = {
+    KeyW: 1, KeyA: 1, KeyS: 1, KeyD: 1,
+    ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1,
+    ShiftLeft: 1, ShiftRight: 1
+  };
+  var menu = document.getElementById('menuJogo');
+  var btnPlay = document.getElementById('btnPlay');
+  var VIEW_LABEL = canvas.getAttribute('aria-label');
+  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr e arraste para girar a câmera.';
+
+  function setPlayUI(on) {
+    document.getElementById('viewerBtns').hidden = on;
+    document.getElementById('viewerHint').hidden = on;
+    document.getElementById('tabsBar').hidden = on;
+    document.getElementById('playBtns').hidden = !on;
+    document.getElementById('playHint').hidden = !on;
+    canvas.setAttribute('aria-label', on ? PLAY_LABEL : VIEW_LABEL);
+  }
+  function openMenu() {
+    menu.hidden = false;
+    menu.querySelector('.env').focus();
+  }
+  function closeMenu() {
+    menu.hidden = true;
+    btnPlay.focus();
+  }
+  function startGame(envId) {
+    if (envId !== 'sala-vazia') return;        /* por enquanto só existe este ambiente */
+    menu.hidden = true;
+    playing = true;
+    keys = {}; moving = false; sprint = false;
+    pl.x = 0; pl.z = 8; pl.face = Math.PI;     /* de costas para a câmera */
+    camYaw = 0; camPitch = 0.4;
+    zoom = 1; zoomCur = 1;
+    walking = false; running = false; syncGait();
+    waveT0 = -1;
+    rig.visible = false;
+    room.visible = true;
+    var c = active.character;
+    room.add(c);                               /* sai do visualizador e entra na sala */
+    c.rotation.order = 'YXZ';                  /* gira o corpo no eixo vertical antes de inclinar */
+    c.position.set(pl.x, 0, pl.z);
+    VIEW_LIGHTS.forEach(function (l) { l[0].intensity = 0; });
+    hemi.intensity = 0.3;                      /* só a lâmpada ilumina, com um pouco de luz ambiente */
+    setPlayUI(true);
+    canvas.focus();
+  }
+  function stopGame() {
+    playing = false;
+    keys = {}; moving = false; sprint = false;
+    var c = active.character;
+    rig.add(c);                                /* volta para o visualizador */
+    c.rotation.set(0, 0, 0);
+    c.rotation.order = 'XYZ';
+    c.position.set(-0.05, -4.6, 0);
+    room.visible = false;
+    rig.visible = true;
+    VIEW_LIGHTS.forEach(function (l) { l[0].intensity = l[1]; });
+    yaw = START_YAW; pitch = START_PITCH; zoom = 1; zoomCur = 1;
+    setPlayUI(false);
+    btnPlay.focus();
+  }
+
+  btnPlay.addEventListener('click', openMenu);
+  document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);
+  document.getElementById('btnExit').addEventListener('click', stopGame);
+  menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
+  Array.prototype.forEach.call(menu.querySelectorAll('.env'), function (b) {
+    b.addEventListener('click', function () { startGame(b.getAttribute('data-env')); });
+  });
+
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (!menu.hidden) closeMenu();
+      else if (playing) stopGame();
+      return;
+    }
+    if (!playing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (MOVE_KEYS[e.code]) { keys[e.code] = true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', function (e) { delete keys[e.code]; });
+  window.addEventListener('blur', function () { keys = {}; });
+
+  /* W/A/S/D andam em relação à câmera: W afasta da câmera, S aproxima, A esquerda, D direita */
+  function updatePlay(dt) {
+    var f = ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
+    var r = ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
+    sprint = !!(keys.ShiftLeft || keys.ShiftRight);
+    var sy = Math.sin(camYaw), cy = Math.cos(camYaw);
+    var dx = -sy * f + cy * r;
+    var dz = -cy * f - sy * r;
+    var len = Math.sqrt(dx * dx + dz * dz);
+    moving = len > 0.001;
+    if (!moving) return;
+    dx /= len; dz /= len;
+    var sp = sprint ? RUN_SPEED : WALK_SPEED;
+    pl.x = clamp(pl.x + dx * sp * dt, -LIM_X, LIM_X);
+    pl.z = clamp(pl.z + dz * sp * dt, -LIM_Z, LIM_Z);
+    var target = Math.atan2(dx, dz);           /* a personagem olha para +z quando rotation.y = 0 */
+    var diff = Math.atan2(Math.sin(target - pl.face), Math.cos(target - pl.face));
+    pl.face += diff * Math.min(1, dt * 12);
+  }
+  /* câmera em terceira pessoa: orbita a personagem e nunca sai da sala */
+  function applyPlayCamera() {
+    var dist = 22 * zoomCur;
+    var cp = Math.cos(camPitch), sp = Math.sin(camPitch);
+    var tx = pl.x, ty = 5.2, tz = pl.z;
+    var hx = ROOM_W / 2 - 0.6, hz = ROOM_D / 2 - 0.6;
+    camera.position.set(
+      clamp(tx + Math.sin(camYaw) * cp * dist, -hx, hx),
+      clamp(ty + sp * dist, 1, ROOM_H - 1),
+      clamp(tz + Math.cos(camYaw) * cp * dist, -hz, hz)
+    );
+    camera.lookAt(tx, ty, tz);
+  }
+
   var last = performance.now();
   function frame(now) {
     var dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (auto && !drag) yaw += dt * 0.45;
+    if (playing) updatePlay(dt);
+    if (auto && !drag && !playing) yaw += dt * 0.45;
     rig.rotation.y = yaw;
     var wz = 0, wt = 0;
     if (waveT0 >= 0) {
@@ -600,19 +801,26 @@
     var a = active;
     a.armRG.rotation.z = wz;
     a.hand1.rotation.y = wt * Math.PI / 2;
-    walkK += (((walking || running) ? 1 : 0) - walkK) * Math.min(1, dt * 6);
-    runK += ((running ? 1 : 0) - runK) * Math.min(1, dt * 6);
+    var gaitOn = playing ? moving : (walking || running);
+    var runOn = playing ? (moving && sprint) : running;
+    walkK += ((gaitOn ? 1 : 0) - walkK) * Math.min(1, dt * 6);
+    runK += ((runOn ? 1 : 0) - runK) * Math.min(1, dt * 6);
     var la = 0.35 + 0.25 * runK, aa = 0.4 + 0.4 * runK;
     if (walkK > 0.001) walkPh += dt * (6.5 + 5 * runK);
     var sw = Math.sin(walkPh) * walkK;
     a.legs.forEach(function (l) { l.g.rotation.x = l.s * sw * la; });
     a.armLG.rotation.x = sw * aa;
     a.armRG.rotation.x = waveT0 >= 0 ? 0 : -sw * aa;
-    a.character.position.y = -4.6 - 3.9 * (1 - Math.cos(la * Math.abs(sw)));
+    a.character.position.y = (playing ? 0 : -4.6) - 3.9 * (1 - Math.cos(la * Math.abs(sw)));
+    if (playing) {
+      a.character.position.x = pl.x;
+      a.character.position.z = pl.z;
+      a.character.rotation.y = pl.face;
+    }
     a.character.rotation.x = 0.12 * runK;
     rig.rotation.x = pitch;
     zoomCur += (zoom - zoomCur) * Math.min(1, dt * 8);
-    applyCamera();
+    if (playing) applyPlayCamera(); else applyCamera();
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
