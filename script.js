@@ -37,7 +37,6 @@
     pupil: mat(0x151a17),
     hi: mat(0xffffff, { emissive: 0xffffff }),
     lid: mat(0x3e343e),
-    mouth: mat(0x8a5a5a),
     stripe: mat(0xe6e6ec),
     sock: mat(0xe4e4e8),
     shoeWhite: mat(0xe9e9e4),
@@ -141,11 +140,6 @@
       lid.position.z += 0.03;
       head.add(lid);
     });
-    /* boca */
-    var mp = surf(0, -0.52);
-    var mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.035, 0.04), M.mouth);
-    mouth.position.set(mp.x, mp.y, mp.z + 0.015);
-    head.add(mouth);
     /* orelhas */
     [-1, 1].forEach(function (s) {
       var ear = ico(0.17, 0, skinShadeM, 0.5, 1, 0.8);
