@@ -92,7 +92,8 @@
      Monta uma menina completa e devolve as partes que as animações mexem.
      Cada chamada gera uma cópia independente; o gerador aleatório é recriado
      aqui dentro para todas as cópias terem exatamente o mesmo cabelo. */
-  function createCharacter() {
+  function createCharacter(variant) {
+    /* variant = posição da aba (0 = Personagem 1, 1 = Personagem 2...); só muda detalhes de cada um */
     var rnd = rng(7);
     var character = new THREE.Group();    /* pés em y = 0, depois deslocado para centralizar */
     character.position.set(-0.05, -4.6, 0);
@@ -209,6 +210,21 @@
     shellGeo.setAttribute('position', new THREE.Float32BufferAttribute(kept, 3));
     bake(shellGeo, 0x5a4a43, SHELL_C, 0.06);
     head.add(new THREE.Mesh(shellGeo, M.hairV));
+
+    /* Personagem 2: franja = um triângulo de cabelo no meio da testa.
+       Os dois cantos de cima ficam junto da casca do cabelo e a ponta desce até perto das sobrancelhas. */
+    if (variant === 1) {
+      var bangPts = [[-0.33, 0.62, 0.09], [0.33, 0.62, 0.09], [0, 0.24, 0.035]];   /* x, y na testa; folga para fora */
+      var bv = [];
+      bangPts.forEach(function (v) {
+        var s = surf(v[0], v[1]);
+        bv.push(s.x, s.y, s.z + v[2]);
+      });
+      var bangGeo = new THREE.BufferGeometry();
+      bangGeo.setAttribute('position', new THREE.Float32BufferAttribute(bv, 3));
+      bake(bangGeo, 0x5a4a43, SHELL_C, 0.06);
+      head.add(new THREE.Mesh(bangGeo, M.hairV));
+    }
 
     head.position.set(0, HEAD_Y, 0.05);
     head.rotation.set(0.2, 0.1, -0.06);
@@ -464,7 +480,7 @@
   }
   for (var ci = 0; ci < NUM_CHARACTERS; ci++) {
     (function (i) {
-      var c = createCharacter();
+      var c = createCharacter(i);
       c.name = 'Personagem ' + (i + 1);
       c.character.visible = false;
       rig.add(c.character);
