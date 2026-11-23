@@ -714,7 +714,10 @@
   function stopGame() {
     playing = false;
     keys = {}; moving = false; sprint = false;
-    if (fsElement()) exitFs();
+    if (full) {
+      if (fsElement()) exitFs();
+      setFull(false);
+    }
     var c = active.character;
     rig.add(c);                                /* volta para o visualizador */
     c.rotation.set(0, 0, 0);
@@ -744,12 +747,34 @@
     var p = ex.call(document);
     if (p && p.catch) p.catch(function () {});
   }
-  function toggleFullscreen() { if (fsElement()) exitFs(); else enterFs(); }
-  function syncFull() { btnFull.setAttribute('aria-pressed', fsElement() ? 'true' : 'false'); }
-  btnFull.hidden = !(fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen);   /* ex.: iPhone não oferece */
+  /* "tela cheia" = layout sem título nem abas, com o palco ocupando a janela toda (classe immersive)
+     + tela cheia real do navegador, quando ele permite. Se o navegador bloquear a real
+     (página dentro de um preview/iframe, iPhone...), o layout sem bordas continua valendo. */
+  var full = false, realFs = false;
+  function setFull(on) {
+    full = on;
+    document.body.classList.toggle('immersive', on);
+    btnFull.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function toggleFullscreen() {
+    if (full) {
+      if (fsElement()) exitFs();
+      setFull(false);
+    } else {
+      setFull(true);
+      enterFs();
+    }
+  }
+  function onFsChange() {
+    if (fsElement()) { realFs = true; return; }
+    if (realFs) {                       /* saiu da tela cheia real (Esc, por exemplo) */
+      realFs = false;
+      if (full) setFull(false);
+    }
+  }
   btnFull.addEventListener('click', toggleFullscreen);
-  document.addEventListener('fullscreenchange', syncFull);
-  document.addEventListener('webkitfullscreenchange', syncFull);
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
 
   btnPlay.addEventListener('click', openMenu);
   document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);

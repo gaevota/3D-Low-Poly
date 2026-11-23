@@ -153,6 +153,20 @@ button.primary {
   border-color: transparent;
   font-weight: 600;
 }
+/* Tela cheia: sem título e abas, palco na janela toda, controles por cima embaixo */
+.immersive .app { padding: 0; gap: 0; }
+.immersive header,
+.immersive .tabs-bar { display: none; }
+.immersive footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  padding: 24px max(12px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+.immersive .hint { color: #fff; }
 /* Menu de ambientes */
 .overlay {
   position: fixed;
