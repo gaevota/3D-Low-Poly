@@ -185,6 +185,7 @@
     }
 
     var SHELL_C = new THREE.Vector3(0, 0.08, -0.06);
+    var BANG_TIP_Y = 0.15;     /* altura da ponta da franja na esfera do cabelo (o "bico" original ficava em 0,526) */
     function noise3(x, y, z) {
       return Math.sin(x * 7.3 + y * 5.1 + z * 3.7) * 0.5 + Math.sin(x * 3.1 - y * 8.7 + z * 6.3) * 0.5;
     }
@@ -201,6 +202,13 @@
       if (bottomOpen || faceWindow) continue;
       for (var q = 0; q < 3; q++) {
         var vx = sp.getX(fi + q), vy = sp.getY(fi + q), vz = sp.getZ(fi + q);
+        /* Personagem 2, franja: o vértice do cabelo que forma o "bico" no meio da testa
+           (0; 0,526; 0,851 na esfera) desce, então o triângulo de cabelo do meio da testa
+           fica comprido e termina perto das sobrancelhas. O vértice continua sobre a esfera. */
+        if (variant === 1 && Math.abs(vx) < 0.01 && Math.abs(vy - 0.526) < 0.01 && vz > 0.8) {
+          vy = BANG_TIP_Y;
+          vz = Math.sqrt(1 - vy * vy - vx * vx);
+        }
         var rr = 1 + noise3(vx, vy, vz) * 0.02;
         var fl = vy < 0 ? 1 + 0.14 * (-vy) : 1;
         kept.push(vx * rr * fl * 1.12 + SHELL_C.x, vy * rr * 1.2 + SHELL_C.y, vz * rr * fl * 1.12 + SHELL_C.z);
@@ -210,21 +218,6 @@
     shellGeo.setAttribute('position', new THREE.Float32BufferAttribute(kept, 3));
     bake(shellGeo, 0x5a4a43, SHELL_C, 0.06);
     head.add(new THREE.Mesh(shellGeo, M.hairV));
-
-    /* Personagem 2: franja = um triângulo de cabelo no meio da testa.
-       Os dois cantos de cima ficam junto da casca do cabelo e a ponta desce até perto das sobrancelhas. */
-    if (variant === 1) {
-      var bangPts = [[-0.33, 0.62, 0.09], [0.33, 0.62, 0.09], [0, 0.24, 0.035]];   /* x, y na testa; folga para fora */
-      var bv = [];
-      bangPts.forEach(function (v) {
-        var s = surf(v[0], v[1]);
-        bv.push(s.x, s.y, s.z + v[2]);
-      });
-      var bangGeo = new THREE.BufferGeometry();
-      bangGeo.setAttribute('position', new THREE.Float32BufferAttribute(bv, 3));
-      bake(bangGeo, 0x5a4a43, SHELL_C, 0.06);
-      head.add(new THREE.Mesh(bangGeo, M.hairV));
-    }
 
     head.position.set(0, HEAD_Y, 0.05);
     head.rotation.set(0.2, 0.1, -0.06);
