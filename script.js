@@ -195,8 +195,8 @@
       var cz = (sp.getZ(fi) + sp.getZ(fi + 1) + sp.getZ(fi + 2)) / 3;
       var bottomOpen = cy < -0.72;
       var faceWindow = cz > 0.5 && cy > -0.8 && cy < 0.42 && Math.abs(cx) < 0.58;
-      /* Cabelo 3: as duas facetas dos lados (x ≈ ±0,71, z ≈ 0) descem até y = −0,85 e aparecem como dois triângulos ao lado do pescoço */
-      var sideTip = noSideTips && Math.abs(cx) > 0.65 && Math.abs(cz) < 0.1 && cy < -0.5;
+      /* Cabelo 3: as duas facetas da frente de baixo (x ≈ ±0,55, z ≈ 0,27, na borda inferior) apareciam como dois triângulos escuros de cada lado do pescoço */
+      var sideTip = noSideTips && Math.abs(cx) > 0.45 && cz > 0.15 && cz < 0.35 && cy < -0.6;
       if (bottomOpen || faceWindow || sideTip) continue;
       for (var q = 0; q < 3; q++) {
         var vx = sp.getX(fi + q), vy = sp.getY(fi + q), vz = sp.getZ(fi + q);
