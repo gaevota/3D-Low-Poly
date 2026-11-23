@@ -190,6 +190,9 @@
       return Math.sin(x * 7.3 + y * 5.1 + z * 3.7) * 0.5 + Math.sin(x * 3.1 - y * 8.7 + z * 6.3) * 0.5;
     }
     /* casca: esfera de poucas faces, aberta embaixo e com uma janela para o rosto */
+    /* longBang = true gera o "Cabelo 2" (franja comprida); false gera o "Cabelo 1" */
+    function buildShell(longBang) {
+    rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
     var sp = shellSrc.attributes.position;
     var kept = [];
@@ -205,7 +208,7 @@
         /* Personagem 2, franja: o vértice do cabelo que forma o "bico" no meio da testa
            (0; 0,526; 0,851 na esfera) desce, então o triângulo de cabelo do meio da testa
            fica comprido e termina perto das sobrancelhas. O vértice continua sobre a esfera. */
-        if (variant === 1 && Math.abs(vx) < 0.01 && Math.abs(vy - 0.526) < 0.01 && vz > 0.8) {
+        if (longBang && Math.abs(vx) < 0.01 && Math.abs(vy - 0.526) < 0.01 && vz > 0.8) {
           vy = BANG_TIP_Y;
           vz = Math.sqrt(1 - vy * vy - vx * vx);
         }
@@ -217,7 +220,15 @@
     var shellGeo = new THREE.BufferGeometry();
     shellGeo.setAttribute('position', new THREE.Float32BufferAttribute(kept, 3));
     bake(shellGeo, 0x5a4a43, SHELL_C, 0.06);
-    head.add(new THREE.Mesh(shellGeo, M.hairV));
+    return shellGeo;
+    }
+    var hairMesh = new THREE.Mesh(buildShell(variant === 1), M.hairV);
+    head.add(hairMesh);
+    function setHair(n) {
+      hairMesh.geometry.dispose();
+      hairMesh.geometry = buildShell(n === 2);
+      result.hair = n;
+    }
 
     head.position.set(0, HEAD_Y, 0.05);
     head.rotation.set(0.2, 0.1, -0.06);
@@ -434,7 +445,8 @@
       legIn.add(shoe);
     });
 
-    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs, shirt: shirtM, shirtDark: shirtD };
+    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs, shirt: shirtM, shirtDark: shirtD,
+                   hair: variant === 1 ? 2 : 1, setHair: setHair };
     setShirtColor(result, SHIRT_DEFAULT);
     return result;
   }
@@ -480,6 +492,7 @@
     if (focus) tabBtns[i].focus();
     charName.textContent = active.name;
     syncShirtUI();
+    syncHairUI();
     document.getElementById('count').textContent = nf.format(Math.round(triCount(active.character))) + ' triângulos';
   }
   for (var ci = 0; ci < NUM_CHARACTERS; ci++) {
@@ -545,6 +558,17 @@
     swatchBtns.push(b);
   });
   shirtCustom.addEventListener('input', function () { applyShirt(shirtCustom.value); });
+
+  /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
+  var hairPicker = document.getElementById('hairPicker');
+  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2')];
+  function syncHairUI() {
+    hairPicker.hidden = (active !== characters[0]);
+    btnHair.forEach(function (b, j) { b.setAttribute('aria-pressed', active.hair === j + 1 ? 'true' : 'false'); });
+  }
+  btnHair.forEach(function (b, j) {
+    b.addEventListener('click', function () { active.setHair(j + 1); syncHairUI(); });
+  });
   selectCharacter(0);
 
   /* ---------- câmera e controles ---------- */
