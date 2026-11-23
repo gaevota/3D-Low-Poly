@@ -13,7 +13,7 @@
   var canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', 'Modelo 3D low poly de corpo inteiro de uma menina de cabelo castanho volumoso em facetas, camiseta azul-marinho larga, bermuda preta com listras, meias brancas e tênis, com mãos simples de cinco dedos. Use as setas para girar.');
+  canvas.setAttribute('aria-label', 'Modelo 3D low poly de corpo inteiro de uma menina de cabelo castanho volumoso em facetas, camiseta larga, bermuda preta com listras, meias brancas e tênis, com mãos simples de cinco dedos. Use as setas para girar.');
   stage.appendChild(canvas);
 
   var scene = new THREE.Scene();
@@ -37,8 +37,6 @@
     skinSmooth: mat(0xd3c3bb, { flatShading: false }),
     skinShade: mat(0xb9a8a3),
     hairV: mat(0xffffff, { vertexColors: true, side: DS }),
-    shirt: mat(0x2f3366),
-    shirtDark: mat(0x22264a),
     eye: mat(0x151a17),
     pupil: mat(0x151a17),
     hi: mat(0xffffff, { emissive: 0xffffff }),
@@ -95,6 +93,8 @@
   function createCharacter(variant) {
     /* variant = posição da aba (0 = Personagem 1, 1 = Personagem 2...); só muda detalhes de cada um */
     var rnd = rng(7);
+    /* camiseta própria de cada personagem, para a cor poder mudar sem afetar os outros */
+    var shirtM = mat(0xffffff), shirtD = mat(0xffffff);
     var character = new THREE.Group();    /* pés em y = 0, depois deslocado para centralizar */
     character.position.set(-0.05, -4.6, 0);
 
@@ -227,12 +227,12 @@
     /* ---------- tronco (camiseta larga) ---------- */
     character.add(limb([0, 6.7, 0], [0, 7.22, 0.02], 0.24, 0.22, M.skin, 7));
 
-    var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.0, 2.3, 8, 1), M.shirt);
+    var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.0, 2.3, 8, 1), shirtM);
     torso.scale.z = 0.6;
     torso.position.y = 5.55;          /* de 4,4 a 6,7 */
     character.add(torso);
 
-    var collar = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.045, 5, 10), M.shirtDark);
+    var collar = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.045, 5, 10), shirtD);
     collar.rotation.x = Math.PI / 2;
     collar.position.set(0, 6.73, 0.0);
     collar.scale.set(1, 1, 1);
@@ -261,7 +261,7 @@
     var armRG = new THREE.Group(); armRG.position.set(S[0], S[1], S[2]); character.add(armRG);
     var armIn = new THREE.Group(); armIn.position.set(-S[0], -S[1], -S[2]); armRG.add(armIn);
     armIn.add(limb(lerp3(S, H1, 0.07), H1, 0.21, 0.085, M.skin, 7));
-    armIn.add(limb([0.69, 6.7, 0.0], lerp3(S, E, 0.8), 0.26, 0.38, M.shirt, 7));
+    armIn.add(limb([0.69, 6.7, 0.0], lerp3(S, E, 0.8), 0.26, 0.38, shirtM, 7));
     var hand1 = makeHand(1);
     hand1.position.set(H1[0], H1[1] + 0.03, H1[2]);
     hand1.scale.setScalar(0.95);
@@ -272,7 +272,7 @@
     var armLG = new THREE.Group(); armLG.position.set(S2[0], S2[1], S2[2]); character.add(armLG);
     var armLIn = new THREE.Group(); armLIn.position.set(-S2[0], -S2[1], -S2[2]); armLG.add(armLIn);
     armLIn.add(limb(lerp3(S2, H2, 0.07), H2, 0.21, 0.085, M.skin, 7));
-    armLIn.add(limb([-0.69, 6.7, 0.0], lerp3(S2, E2, 0.8), 0.26, 0.38, M.shirt, 7));
+    armLIn.add(limb([-0.69, 6.7, 0.0], lerp3(S2, E2, 0.8), 0.26, 0.38, shirtM, 7));
     var hand2 = makeHand(-1);
     hand2.position.set(H2[0], H2[1] + 0.03, H2[2]);
     hand2.scale.setScalar(0.95);
@@ -434,7 +434,17 @@
       legIn.add(shoe);
     });
 
-    return { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs };
+    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs, shirt: shirtM, shirtDark: shirtD };
+    setShirtColor(result, SHIRT_DEFAULT);
+    return result;
+  }
+
+  /* cor da camiseta: o tom principal vem do hex; a gola usa o mesmo tom, mais escuro */
+  var SHIRT_DEFAULT = '#2f3366';
+  function setShirtColor(c, hex) {
+    c.shirtHex = hex;
+    c.shirt.color.set(hex);
+    c.shirtDark.color.set(hex).multiplyScalar(0.72);
   }
 
   /* ---------- personagens (abas) ----------
@@ -469,6 +479,7 @@
     stage.setAttribute('aria-labelledby', tabBtns[i].id);
     if (focus) tabBtns[i].focus();
     charName.textContent = active.name;
+    syncShirtUI();
     document.getElementById('count').textContent = nf.format(Math.round(triCount(active.character))) + ' triângulos';
   }
   for (var ci = 0; ci < NUM_CHARACTERS; ci++) {
@@ -501,6 +512,39 @@
     else if (e.key === 'End') to = n - 1;
     if (to >= 0) { e.preventDefault(); selectCharacter(to, true); }
   });
+
+  /* ---------- cor da camiseta (cada personagem tem a sua) ---------- */
+  var SHIRT_COLORS = [
+    ['Azul-marinho', '#2f3366'], ['Vermelho', '#b3333a'], ['Laranja', '#d9772b'], ['Amarelo', '#e0b92f'],
+    ['Verde', '#3f8a55'], ['Turquesa', '#2f9aa3'], ['Roxo', '#7a45a8'], ['Rosa', '#d9739c'],
+    ['Branco', '#e9e9ee'], ['Cinza', '#7d7f8c'], ['Preto', '#1b1b20']
+  ];
+  var shirtBox = document.getElementById('shirtSwatches');
+  var shirtCustom = document.getElementById('shirtCustom');
+  var swatchBtns = [];
+  function syncShirtUI() {
+    var hex = active.shirtHex.toLowerCase();
+    swatchBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-hex') === hex ? 'true' : 'false'); });
+    shirtCustom.value = hex;
+  }
+  function applyShirt(hex) {
+    setShirtColor(active, hex);
+    syncShirtUI();
+  }
+  SHIRT_COLORS.forEach(function (sc) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'swatch';
+    b.setAttribute('data-hex', sc[1]);
+    b.setAttribute('aria-label', 'Camiseta ' + sc[0].toLowerCase());
+    b.setAttribute('aria-pressed', 'false');
+    b.title = sc[0];
+    b.style.backgroundColor = sc[1];
+    b.addEventListener('click', function () { applyShirt(sc[1]); });
+    shirtBox.appendChild(b);
+    swatchBtns.push(b);
+  });
+  shirtCustom.addEventListener('input', function () { applyShirt(shirtCustom.value); });
   selectCharacter(0);
 
   /* ---------- câmera e controles ---------- */
@@ -592,6 +636,7 @@
     var on = btnWire.getAttribute('aria-pressed') !== 'true';
     btnWire.setAttribute('aria-pressed', on ? 'true' : 'false');
     Object.keys(M).forEach(function (n) { M[n].wireframe = on; });
+    characters.forEach(function (c) { c.shirt.wireframe = on; c.shirtDark.wireframe = on; });
   });
   document.getElementById('btnIn').addEventListener('click', function () { zoom = clamp(zoom * 0.85, 0.4, 1.7); });
   document.getElementById('btnOut').addEventListener('click', function () { zoom = clamp(zoom / 0.85, 0.4, 1.7); });
