@@ -274,11 +274,11 @@
     longHair.visible = false;
     character.add(longHair);
 
-    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) */
+    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) · n = 4: Cabelo 4 (comprido com a franja do Cabelo 2) */
     function setHair(n) {
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(n === 2, n === 3);
-      longHair.visible = (n === 3);
+      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4);
+      longHair.visible = (n === 3 || n === 4);
       result.hair = n;
     }
 
@@ -665,7 +665,7 @@
 
   /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
   var hairPicker = document.getElementById('hairPicker');
-  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3')];
+  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3'), document.getElementById('btnHair4')];
   function syncHairUI() {
     hairPicker.hidden = (active !== characters[0]);
     btnHair.forEach(function (b, j) { b.setAttribute('aria-pressed', active.hair === j + 1 ? 'true' : 'false'); });
