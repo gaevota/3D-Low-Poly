@@ -735,11 +735,27 @@
   var fsRoot = document.documentElement;
   var btnFull = document.getElementById('btnFull');
   function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  /* aviso curto no topo (ex.: quando o navegador bloqueia a tela cheia de verdade) */
+  var note = document.createElement('div');
+  note.className = 'note';
+  note.setAttribute('role', 'status');
+  note.hidden = true;
+  document.body.appendChild(note);
+  var noteT = 0;
+  function showNote(text) {
+    note.textContent = text;
+    note.hidden = false;
+    clearTimeout(noteT);
+    noteT = setTimeout(function () { note.hidden = true; }, 8000);
+  }
+  var FS_BLOCKED = 'O navegador não deixou usar a tela cheia de verdade aqui (a página pode estar dentro de outra janela). Abra o jogo em uma aba própria para ocupar a tela toda.';
   function enterFs() {
     var req = fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen;
-    if (!req) return;
-    var p = req.call(fsRoot);
-    if (p && p.catch) p.catch(function () {});
+    var allowed = document.fullscreenEnabled !== false && document.webkitFullscreenEnabled !== false;
+    if (!req || !allowed) { showNote(FS_BLOCKED); return; }
+    var p;
+    try { p = req.call(fsRoot); } catch (err) { showNote(FS_BLOCKED); return; }
+    if (p && p.catch) p.catch(function () { showNote(FS_BLOCKED); });
   }
   function exitFs() {
     var ex = document.exitFullscreen || document.webkitExitFullscreen;
@@ -751,10 +767,20 @@
      + tela cheia real do navegador, quando ele permite. Se o navegador bloquear a real
      (página dentro de um preview/iframe, iPhone...), o layout sem bordas continua valendo. */
   var full = false, realFs = false;
+  /* na tela cheia, os controles somem depois de 2,5 s sem mexer o mouse e voltam ao mexer */
+  var idleT = 0;
+  function wake() {
+    document.body.classList.remove('idle');
+    clearTimeout(idleT);
+    if (full) idleT = setTimeout(function () { document.body.classList.add('idle'); }, 2500);
+  }
+  window.addEventListener('pointermove', wake);
+  window.addEventListener('pointerdown', wake);
   function setFull(on) {
     full = on;
     document.body.classList.toggle('immersive', on);
     btnFull.setAttribute('aria-pressed', on ? 'true' : 'false');
+    wake();
   }
   function toggleFullscreen() {
     if (full) {

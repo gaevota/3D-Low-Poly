@@ -167,6 +167,26 @@ button.primary {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
 }
 .immersive .hint { color: #fff; }
+.immersive footer { transition: opacity 0.25s; }
+.immersive.idle footer { opacity: 0; pointer-events: none; }
+.immersive.idle footer:focus-within { opacity: 1; pointer-events: auto; }
+.immersive.idle #stage canvas { cursor: none; }
+/* Aviso curto */
+.note {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  box-sizing: border-box;
+  width: min(calc(100% - 24px), 440px);
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.85rem;
+}
 /* Menu de ambientes */
 .overlay {
   position: fixed;
