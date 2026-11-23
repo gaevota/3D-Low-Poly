@@ -307,7 +307,7 @@
       var g = new THREE.Group();
       var d = -s;                               /* lado da palma no eixo x */
       var body = ico(1, 2, skinSmoothM, 0.13, 0.4, 0.225);
-      body.position.set(s * 0.03, -0.28, 0);   /* bem de leve para fora, longe do corpo */
+      body.position.set(0, -0.28, 0);
       g.add(body);
       return g;
     }
@@ -320,8 +320,13 @@
     armIn.add(limb(lerp3(S, H1, 0.07), H1, 0.19, 0.077, skinM, 7));
     armIn.add(limb([0.69, 6.7, 0.0], lerp3(S, E, 0.8), 0.26, 0.38, shirtM, 7));
     var hand1 = makeHand(1);
-    hand1.position.set(H1[0], H1[1] + 0.03, H1[2]);
+    hand1.position.set(H1[0] + 0.03, H1[1] + 0.03, H1[2]);   /* bem de leve para fora, longe do corpo */
     hand1.scale.setScalar(0.95);
+    /* a mão acompanha a inclinação do antebraço (~10° para fora) e gira em torno do eixo dele ao acenar */
+    var FA = Math.atan2(H1[0] - S[0], S[1] - H1[1]);
+    var handBaseQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), FA);
+    var handUp = new THREE.Vector3(-Math.sin(FA), Math.cos(FA), 0);
+    hand1.quaternion.copy(handBaseQ);
     armIn.add(hand1);
 
     /* ---------- braço esquerdo caído (à esquerda na imagem de frente) ---------- */
@@ -331,8 +336,9 @@
     armLIn.add(limb(lerp3(S2, H2, 0.07), H2, 0.19, 0.077, skinM, 7));
     armLIn.add(limb([-0.69, 6.7, 0.0], lerp3(S2, E2, 0.8), 0.26, 0.38, shirtM, 7));
     var hand2 = makeHand(-1);
-    hand2.position.set(H2[0], H2[1] + 0.03, H2[2]);
+    hand2.position.set(H2[0] - 0.03, H2[1] + 0.03, H2[2]);
     hand2.scale.setScalar(0.95);
+    hand2.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), -FA);
     armLIn.add(hand2);
 
     var bodyRoot = character;
@@ -491,7 +497,7 @@
       legIn.add(shoe);
     });
 
-    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs,
+    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, handBaseQ: handBaseQ, handUp: handUp, legs: legs,
                    parts: {                       /* peças que mudam de cor: materiais principais + os de tom mais escuro (k = quanto escurece) */
                      shirt: { main: [shirtM], dark: [shirtD], k: 0.72, hex: null },    /* a gola usa o tom escuro */
                      shorts: { main: [shortsM], dark: [], hex: null },
@@ -1104,7 +1110,7 @@
     }
     var a = active;
     a.armRG.rotation.z = wz;
-    a.hand1.rotation.y = wt * Math.PI / 2;
+    a.hand1.quaternion.setFromAxisAngle(a.handUp, wt * Math.PI / 2).multiply(a.handBaseQ);
     var gaitOn = playing ? moving : (walking || running);
     var runOn = playing ? (moving && sprint) : running;
     walkK += ((gaitOn ? 1 : 0) - walkK) * Math.min(1, dt * 6);
