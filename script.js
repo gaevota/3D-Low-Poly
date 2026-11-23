@@ -258,6 +258,8 @@
       var lv = [];
       for (var ra = 0; ra < pts.length - 1; ra++) {
         for (var sb = 0; sb < LONG_SEGS; sb++) {
+          /* sem as facetas das pontas laterais logo abaixo da cabeça (y 7,0 a 6,6): apareciam como dois triângulos ao lado do pescoço */
+          if (ra === 3 && (sb === 0 || sb === LONG_SEGS - 1)) continue;
           var p00 = pts[ra][sb], p01 = pts[ra][sb + 1], p10 = pts[ra + 1][sb], p11 = pts[ra + 1][sb + 1];
           lv.push(p00[0], p00[1], p00[2], p10[0], p10[1], p10[2], p01[0], p01[1], p01[2]);
           lv.push(p01[0], p01[1], p01[2], p10[0], p10[1], p10[2], p11[0], p11[1], p11[2]);
