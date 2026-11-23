@@ -345,6 +345,7 @@
 
     var bodyRoot = character;
     var legs = [];
+    var shortsParts = [];        /* bermuda e listras: somem quando o vestido está ligado */
     /* ---------- bermuda, pernas, meias e tênis ---------- */
     [-1, 1].forEach(function (s) {
       /* cada perna fica num grupo que gira em torno do quadril (para andar) */
@@ -356,10 +357,12 @@
       sl.scale.z = 0.85;
       sl.position.set(s * 0.42, 3.85, 0);   /* de 3,3 a 4,4 */
       legIn.add(sl);
+      shortsParts.push(sl);
       /* listra colada na lateral da bermuda, inclinada para acompanhar o cano que alarga embaixo */
       var stripe = box(0.05, 1.12, 0.1, M.stripe, s * 0.92, 3.85, 0);
       stripe.rotation.z = s * 0.09;
       legIn.add(stripe);
+      shortsParts.push(stripe);
 
       /* pernas */
       var hipP = [s * 0.42, 3.6, 0], ankle = [s * 0.46, 0.7, 0];
@@ -499,6 +502,19 @@
       legIn.add(shoe);
     });
 
+    /* ---------- vestido: reaproveita a camiseta (mesmo material, então a cor é a mesma) e troca o shorts por uma saia ----------
+       A saia começa onde a camiseta termina (y = 4,4, raio 1,0, mesma achatada em z) e abre um pouco até o meio da coxa. */
+    var skirt = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.12, 1.3, 8, 1), shirtM);
+    skirt.scale.z = 0.6;
+    skirt.position.y = 3.75;          /* de 3,1 a 4,4 */
+    skirt.visible = false;
+    character.add(skirt);
+    function setDress(on) {
+      shortsParts.forEach(function (m) { m.visible = !on; });
+      skirt.visible = on;
+      result.dress = on;
+    }
+
     var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, handBaseQ: handBaseQ, handUp: handUp, handX: H1[0], legs: legs,
                    parts: {                       /* peças que mudam de cor: materiais principais + os de tom mais escuro (k = quanto escurece) */
                      shirt: { main: [shirtM], dark: [shirtD], k: 0.72, hex: null },    /* a gola usa o tom escuro */
@@ -507,7 +523,7 @@
                      skin: { main: [skinM, skinSmoothM], dark: [skinShadeM], k: 0.87, hex: null },   /* as orelhas usam o tom escuro */
                      hair: { main: [hairM], dark: [], hex: null }
                    },
-                   hair: variant === 1 ? 2 : 1, setHair: setHair };
+                   hair: variant === 1 ? 2 : 1, setHair: setHair, dress: false, setDress: setDress };
     Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
     return result;
   }
@@ -561,6 +577,7 @@
     charName.textContent = active.name;
     syncColorUI();
     syncHairUI();
+    syncDressUI();
     updateCount();
   }
   for (var ci = 0; ci < NUM_CHARACTERS; ci++) {
@@ -672,6 +689,22 @@
   }
   btnHair.forEach(function (b, j) {
     b.addEventListener('click', function () { active.setHair(j + 1); syncHairUI(); updateCount(); });
+  });
+  /* ---------- feminino: vestido (a camiseta vira o vestido e o shorts some) ---------- */
+  var btnDress = document.getElementById('btnDress');
+  function syncDressUI() {
+    btnDress.setAttribute('aria-pressed', active.dress ? 'true' : 'false');
+    partBtns.forEach(function (b) {
+      var k = b.getAttribute('data-part');
+      if (k === 'shorts') b.hidden = active.dress;                       /* sem shorts, não há o que pintar */
+      if (k === 'shirt') b.textContent = active.dress ? 'Vestido' : 'Camiseta';
+    });
+    if (active.dress && curPart === 'shorts') { curPart = 'shirt'; buildSwatches(); syncColorUI(); }
+  }
+  btnDress.addEventListener('click', function () {
+    active.setDress(!active.dress);
+    syncDressUI();
+    updateCount();
   });
   selectCharacter(0);
 
