@@ -313,13 +313,13 @@
       var g = new THREE.Group();
       var d = -s;                               /* lado da palma no eixo x */
       /* punho: peça de transição entre o antebraço fino e a palma achatada */
-      var wrist = ico(1, 1, skinM, 0.1, 0.15, 0.13);
+      var wrist = ico(1, 2, skinSmoothM, 0.1, 0.15, 0.13);
       wrist.position.set(0, -0.03, 0);
       g.add(wrist);
-      var body = ico(1, 1, skinM, 0.115, 0.4, 0.2);
+      var body = ico(1, 2, skinSmoothM, 0.115, 0.4, 0.2);
       body.position.set(0, -0.28, 0);
       g.add(body);
-      var thumb = ico(1, 1, skinM, 0.06, 0.2, 0.068);
+      var thumb = ico(1, 2, skinSmoothM, 0.06, 0.2, 0.068);
       thumb.position.set(d * 0.04, -0.27, 0.22);
       thumb.rotation.x = -0.35;
       g.add(thumb);
