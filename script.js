@@ -229,19 +229,20 @@
        inclinação da cabeça), começa por dentro da casca do cabelo e desce até o meio das costas,
        terminando em pontas. A frente fica livre para aparecerem o rosto e a camiseta. */
     /* Perfil de cada fileira: y, meia-largura (x), meia-profundidade (z), centro em z (o fundo fica em centro − profundidade)
-       e o arco em volta, em radianos a partir de bem atrás (1,75 ≈ ±100°: no topo a cortina abraça os lados e tampa o
-       vão escuro sob a cúpula; mais abaixo o arco fecha até 1,22 ≈ ±70°, só costas).
+       e o arco em volta, em radianos a partir de bem atrás (1,55 ≈ ±89°: no topo a cortina abraça os lados e tampa o
+       vão escuro sob a cúpula; mais abaixo o arco fecha até 1,22 ≈ ±70°, só costas). O arco muda pouco de uma
+       fileira para a outra, para a borda que aparece ao lado do pescoço ficar reta e sem degraus.
        Começa por dentro da cúpula do cabelo (fundo em −0,90 a −0,93, a cúpula está em −1,0) e só sai
        por baixo dela, a partir de y ≈ 7,3, quase na tangente, sem degrau. Depois a largura e o fundo
        vão diminuindo devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5). */
     var LONG_RINGS = [
-      [7.9, 0.88, 0.85, -0.05, 1.75],
-      [7.6, 0.88, 0.85, -0.08, 1.75],
-      [7.3, 0.86, 0.82, -0.08, 1.62],
-      [7.0, 0.84, 0.78, -0.07, 1.45],
-      [6.6, 0.82, 0.72, -0.08, 1.28],
-      [6.2, 0.76, 0.64, -0.10, 1.22],
-      [5.8, 0.70, 0.56, -0.11, 1.22],
+      [7.9, 0.88, 0.85, -0.05, 1.55],
+      [7.6, 0.88, 0.85, -0.08, 1.55],
+      [7.3, 0.86, 0.82, -0.08, 1.55],
+      [7.0, 0.84, 0.78, -0.07, 1.50],
+      [6.6, 0.82, 0.72, -0.08, 1.42],
+      [6.2, 0.76, 0.64, -0.10, 1.32],
+      [5.8, 0.70, 0.56, -0.11, 1.25],
       [5.4, 0.64, 0.50, -0.10, 1.22],
       [5.0, 0.56, 0.44, -0.10, 1.22]
     ];
