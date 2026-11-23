@@ -42,11 +42,9 @@
     hi: mat(0xffffff, { emissive: 0xffffff }),
     lid: mat(0x3e343e),
     mouth: mat(0x8a5a5a),
-    shorts: mat(0x1b1a1f),
     stripe: mat(0xe6e6ec),
     sock: mat(0xe4e4e8),
     shoeWhite: mat(0xe9e9e4),
-    shoeUpper: mat(0x1f1e23, { side: DS }),
     shoeOut: mat(0x8d8d96)
   };
 
@@ -95,6 +93,7 @@
     var rnd = rng(7);
     /* camiseta própria de cada personagem, para a cor poder mudar sem afetar os outros */
     var shirtM = mat(0xffffff), shirtD = mat(0xffffff);
+    var shortsM = mat(0xffffff), shoeM = mat(0xffffff, { side: DS });   /* shoeM = cabedal do tênis */
     var character = new THREE.Group();    /* pés em y = 0, depois deslocado para centralizar */
     character.position.set(-0.05, -4.6, 0);
 
@@ -298,7 +297,7 @@
       var legIn = new THREE.Group(); legIn.position.set(-s * 0.42, -4.0, 0); legG.add(legIn);
       legs.push({ g: legG, s: s });
       /* bermuda: um cano por perna, com a listra branca na lateral */
-      var sl = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.56, 1.1, 8, 1), M.shorts);
+      var sl = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.56, 1.1, 8, 1), shortsM);
       sl.scale.z = 0.85;
       sl.position.set(s * 0.42, 3.85, 0);   /* de 3,3 a 4,4 */
       legIn.add(sl);
@@ -359,7 +358,7 @@
       var vampGeo = new THREE.BufferGeometry();
       vampGeo.setAttribute('position', new THREE.Float32BufferAttribute(vv, 3));
       vampGeo.computeVertexNormals();
-      shoe.add(new THREE.Mesh(vampGeo, M.shoeUpper));
+      shoe.add(new THREE.Mesh(vampGeo, shoeM));
 
       /* parte de trás do cabedal: paredes laterais + calcanhar + tampa com o furo da perna, emendando com a frente */
       var HZ = [-0.36, -0.28, -0.10, 0.05, 0.22], HW = [0.19, 0.295, 0.315, 0.325, 0.31], HH = 0.5, HT = 0.95;
@@ -374,7 +373,7 @@
       var heelGeo = new THREE.BufferGeometry();
       heelGeo.setAttribute('position', new THREE.Float32BufferAttribute(hv, 3));
       heelGeo.computeVertexNormals();
-      shoe.add(new THREE.Mesh(heelGeo, M.shoeUpper));
+      shoe.add(new THREE.Mesh(heelGeo, shoeM));
 
       /* topo do tênis: o próprio cabedal sobe em declive das laterais e do peito do pé até abraçar a meia */
       var OL = [[0, 0.5, -0.36], [-0.1805, 0.5, -0.36], [-0.285, 0.5, -0.28], [-0.309, 0.5, -0.10], [-0.318, 0.5, 0.05],
@@ -393,9 +392,9 @@
       var topGeo = new THREE.BufferGeometry();
       topGeo.setAttribute('position', new THREE.Float32BufferAttribute(tv, 3));
       topGeo.computeVertexNormals();
-      shoe.add(new THREE.Mesh(topGeo, M.shoeUpper));
+      shoe.add(new THREE.Mesh(topGeo, shoeM));
       /* camada interna preta logo abaixo da borda: fecha o fundo ao redor da meia, então não se vê o que tem dentro */
-      var inner = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.24, 8, 1), M.shoeUpper);
+      var inner = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.24, 8, 1), shoeM);
       inner.position.set(0, 0.6, 0);
       shoe.add(inner);
       /* enchimento preto sólido por todo o interior: mesmas seções do cabedal, um pouco menores, do calcanhar à ponta */
@@ -424,7 +423,7 @@
       var fillGeo = new THREE.BufferGeometry();
       fillGeo.setAttribute('position', new THREE.Float32BufferAttribute(fv2, 3));
       fillGeo.computeVertexNormals();
-      shoe.add(new THREE.Mesh(fillGeo, M.shoeUpper));
+      shoe.add(new THREE.Mesh(fillGeo, shoeM));
 
       /* cadarços brancos sobre a parte inclinada do peito do pé */
       function topAt(z) {
@@ -445,18 +444,24 @@
       legIn.add(shoe);
     });
 
-    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs, shirt: shirtM, shirtDark: shirtD,
+    var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, legs: legs,
+                   parts: {                       /* peças que mudam de cor: material principal (+ um tom mais escuro, se houver) */
+                     shirt: { main: shirtM, dark: shirtD, hex: null },      /* a gola usa o tom escuro */
+                     shorts: { main: shortsM, dark: null, hex: null },
+                     shoes: { main: shoeM, dark: null, hex: null }
+                   },
                    hair: variant === 1 ? 2 : 1, setHair: setHair };
-    setShirtColor(result, SHIRT_DEFAULT);
+    Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
     return result;
   }
 
-  /* cor da camiseta: o tom principal vem do hex; a gola usa o mesmo tom, mais escuro */
-  var SHIRT_DEFAULT = '#1b1b20';   /* preto */
-  function setShirtColor(c, hex) {
-    c.shirtHex = hex;
-    c.shirt.color.set(hex);
-    c.shirtDark.color.set(hex).multiplyScalar(0.72);
+  /* cor de uma peça: o tom principal vem do hex; o tom escuro (gola) é o mesmo, mais escuro */
+  var PART_DEFAULT = { shirt: '#1b1b20', shorts: '#1b1b20', shoes: '#1b1b20' };   /* tudo preto */
+  function setPartColor(c, part, hex) {
+    var p = c.parts[part];
+    p.hex = hex;
+    p.main.color.set(hex);
+    if (p.dark) p.dark.color.set(hex).multiplyScalar(0.72);
   }
 
   /* ---------- personagens (abas) ----------
@@ -491,7 +496,7 @@
     stage.setAttribute('aria-labelledby', tabBtns[i].id);
     if (focus) tabBtns[i].focus();
     charName.textContent = active.name;
-    syncShirtUI();
+    syncColorUI();
     syncHairUI();
     document.getElementById('count').textContent = nf.format(Math.round(triCount(active.character))) + ' triângulos';
   }
@@ -531,38 +536,54 @@
     if (to >= 0) { e.preventDefault(); selectCharacter(to, true); }
   });
 
-  /* ---------- cor da camiseta (cada personagem tem a sua) ---------- */
+  /* ---------- cor da camiseta, do shorts e do tênis (cada personagem tem as suas) ---------- */
   var SHIRT_COLORS = [
     ['Azul-marinho', '#2f3366'], ['Vermelho', '#b3333a'], ['Laranja', '#d9772b'], ['Amarelo', '#e0b92f'],
     ['Verde', '#3f8a55'], ['Turquesa', '#2f9aa3'], ['Roxo', '#7a45a8'], ['Rosa', '#d9739c'],
     ['Branco', '#e9e9ee'], ['Cinza', '#7d7f8c'], ['Preto', '#1b1b20']
   ];
-  var shirtBox = document.getElementById('shirtSwatches');
-  var shirtCustom = document.getElementById('shirtCustom');
+  var PARTS = [['shirt', 'Camiseta'], ['shorts', 'Shorts'], ['shoes', 'Tênis']];
+  var curPart = 'shirt';                 /* peça que o seletor está pintando */
+  var partBox = document.getElementById('partBtns');
+  var colorBox = document.getElementById('colorSwatches');
+  var colorCustom = document.getElementById('colorCustom');
+  var partBtns = [];
   var swatchBtns = [];
-  function syncShirtUI() {
-    var hex = active.shirtHex.toLowerCase();
+  function syncColorUI() {
+    var hex = active.parts[curPart].hex.toLowerCase();
+    partBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-part') === curPart ? 'true' : 'false'); });
     swatchBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-hex') === hex ? 'true' : 'false'); });
-    shirtCustom.value = hex;
+    colorCustom.value = hex;
   }
-  function applyShirt(hex) {
-    setShirtColor(active, hex);
-    syncShirtUI();
+  function applyColor(hex) {
+    setPartColor(active, curPart, hex);
+    syncColorUI();
   }
+  PARTS.forEach(function (pt) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'part';
+    b.setAttribute('data-part', pt[0]);
+    b.setAttribute('aria-pressed', 'false');
+    b.textContent = pt[1];
+    b.addEventListener('click', function () { curPart = pt[0]; syncColorUI(); });
+    partBox.appendChild(b);
+    partBtns.push(b);
+  });
   SHIRT_COLORS.forEach(function (sc) {
     var b = document.createElement('button');
     b.type = 'button';
     b.className = 'swatch';
     b.setAttribute('data-hex', sc[1]);
-    b.setAttribute('aria-label', 'Camiseta ' + sc[0].toLowerCase());
+    b.setAttribute('aria-label', 'Cor ' + sc[0].toLowerCase());
     b.setAttribute('aria-pressed', 'false');
     b.title = sc[0];
     b.style.backgroundColor = sc[1];
-    b.addEventListener('click', function () { applyShirt(sc[1]); });
-    shirtBox.appendChild(b);
+    b.addEventListener('click', function () { applyColor(sc[1]); });
+    colorBox.appendChild(b);
     swatchBtns.push(b);
   });
-  shirtCustom.addEventListener('input', function () { applyShirt(shirtCustom.value); });
+  colorCustom.addEventListener('input', function () { applyColor(colorCustom.value); });
 
   /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
   var hairPicker = document.getElementById('hairPicker');
@@ -665,7 +686,12 @@
     var on = btnWire.getAttribute('aria-pressed') !== 'true';
     btnWire.setAttribute('aria-pressed', on ? 'true' : 'false');
     Object.keys(M).forEach(function (n) { M[n].wireframe = on; });
-    characters.forEach(function (c) { c.shirt.wireframe = on; c.shirtDark.wireframe = on; });
+    characters.forEach(function (c) {
+      Object.keys(c.parts).forEach(function (k) {
+        c.parts[k].main.wireframe = on;
+        if (c.parts[k].dark) c.parts[k].dark.wireframe = on;
+      });
+    });
   });
   document.getElementById('btnIn').addEventListener('click', function () { zoom = clamp(zoom * 0.85, 0.4, 1.7); });
   document.getElementById('btnOut').addEventListener('click', function () { zoom = clamp(zoom / 0.85, 0.4, 1.7); });
