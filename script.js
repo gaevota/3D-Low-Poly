@@ -184,7 +184,7 @@
       return Math.sin(x * 7.3 + y * 5.1 + z * 3.7) * 0.5 + Math.sin(x * 3.1 - y * 8.7 + z * 6.3) * 0.5;
     }
     /* casca: esfera de poucas faces, aberta embaixo e com uma janela para o rosto */
-    /* longBang = true gera o "Cabelo 2" (franja comprida); false gera o "Cabelo 1" */
+    /* longBang = true liga a franja comprida ("Colocar franja"); false é a franja normal */
     /* shortCut = true gera o "Cabelo 5" (curto): a borda de baixo sobe e o cabelo termina na altura das orelhas */
     function buildShell(longBang, noSideTips, shortCut) {
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
