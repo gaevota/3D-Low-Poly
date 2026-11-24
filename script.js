@@ -40,7 +40,8 @@
     stripe: mat(0xe6e6ec),
     sock: mat(0xe4e4e8),
     shoeWhite: mat(0xe9e9e4),
-    shoeOut: mat(0x8d8d96)
+    shoeOut: mat(0x8d8d96),
+    tie: mat(0xd9739c)            /* elástico do Cabelo 6 */
   };
 
   function rng(seed) {
@@ -276,11 +277,12 @@
     longHair.visible = false;
     character.add(longHair);
 
-    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) · n = 4: Cabelo 4 (comprido com a franja do Cabelo 2) · n = 5: Cabelo 5 (curto) */
+    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) · n = 4: Cabelo 4 (comprido com a franja do Cabelo 2) · n = 5: Cabelo 5 (curto) · n = 6: Cabelo 6 (preso, rabo de cavalo longo) */
     function setHair(n) {
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4, n === 5);
+      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4, n === 5 || n === 6);
       longHair.visible = (n === 3 || n === 4);
+      ponytail.visible = ponyTie.visible = (n === 6);
       result.hair = n;
     }
 
@@ -288,6 +290,62 @@
     head.rotation.set(0.2, 0.1, -0.06);
     head.scale.setScalar(0.92);
     character.add(head);
+
+    /* ---------- Cabelo 6: cabelo preso (rabo de cavalo longo) ----------
+       A casca é a do cabelo curto (puxado para trás). Atrás da cabeça fica um elástico e, saindo dele,
+       um rabo de facetas que desce pelas costas. O grupo fica preso à cabeça (acompanha o lugar dela),
+       mas com a inclinação e a escala da cabeça desfeitas, para o rabo cair reto e com o mesmo tamanho
+       das outras peças. Coordenadas do rabo: origem no elástico, y para cima, o rabo desce em y negativo. */
+    var PONY_RINGS = [          /* [y, raio, deslocamento em z] */
+      [0.10, 0.20,  0.00],
+      [-0.20, 0.36, -0.04],
+      [-0.80, 0.48, -0.14],
+      [-1.50, 0.46, -0.16],
+      [-2.10, 0.34, -0.10],
+      [-2.60, 0.17, -0.04]
+    ];
+    var PONY_TIP_Y = -3.0, PONY_SEGS = 7;
+    function buildPonytail() {
+      rnd = rng(13);
+      var rows = [];
+      for (var r = 0; r < PONY_RINGS.length; r++) {
+        var ring = PONY_RINGS[r], row = [];
+        for (var s = 0; s < PONY_SEGS; s++) {
+          var th = s / PONY_SEGS * Math.PI * 2;
+          var kk = 1 + noise3(th * 2, ring[0], 2.1) * 0.08;          /* irregularidade leve, como nas outras mechas */
+          row.push([ring[1] * kk * Math.sin(th), ring[0], ring[2] + ring[1] * 0.8 * kk * Math.cos(th)]);
+        }
+        rows.push(row);
+      }
+      var pv = [];
+      function pt(a, b, c) { pv.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); }
+      for (var ra = 0; ra < rows.length - 1; ra++) {
+        for (var sb = 0; sb < PONY_SEGS; sb++) {
+          var a = rows[ra][sb], b = rows[ra][(sb + 1) % PONY_SEGS], c = rows[ra + 1][sb], d = rows[ra + 1][(sb + 1) % PONY_SEGS];
+          pt(a, c, b); pt(b, c, d);
+        }
+      }
+      var last = rows[rows.length - 1], tip = [0, PONY_TIP_Y, PONY_RINGS[PONY_RINGS.length - 1][2]];
+      var topC = [0, PONY_RINGS[0][0] + 0.02, PONY_RINGS[0][2]];
+      for (var sc = 0; sc < PONY_SEGS; sc++) {
+        pt(last[sc], tip, last[(sc + 1) % PONY_SEGS]);                  /* ponta */
+        pt(rows[0][sc], rows[0][(sc + 1) % PONY_SEGS], topC);           /* tampa de cima (fica escondida sob o elástico) */
+      }
+      var pg = new THREE.BufferGeometry();
+      pg.setAttribute('position', new THREE.Float32BufferAttribute(pv, 3));
+      bake(pg, 0xffffff, new THREE.Vector3(0, -1.3, PONY_RINGS[3][2]), 0.06);   /* só claro/escuro; a cor vem do material */
+      return pg;
+    }
+    var ponyG = new THREE.Group();
+    ponyG.position.set(0, 0.3, -1.12);                    /* atrás da cabeça, um pouco acima do meio (coordenadas da cabeça) */
+    ponyG.quaternion.copy(head.quaternion).invert();
+    ponyG.scale.setScalar(1 / 0.92);
+    var ponytail = new THREE.Mesh(buildPonytail(), hairM);
+    var ponyTie = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.24, 0.2, 7, 1), M.tie);
+    ponyTie.position.y = -0.1;
+    ponytail.visible = false; ponyTie.visible = false;
+    ponyG.add(ponytail); ponyG.add(ponyTie);
+    head.add(ponyG);
 
     /* ---------- tronco (camiseta larga) ---------- */
     character.add(limb([0, 6.7, 0], [0, 7.22, 0.02], 0.24, 0.22, skinM, 7));
@@ -684,7 +742,7 @@
 
   /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
   var hairPicker = document.getElementById('hairPicker');
-  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3'), document.getElementById('btnHair4'), document.getElementById('btnHair5')];
+  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3'), document.getElementById('btnHair4'), document.getElementById('btnHair5'), document.getElementById('btnHair6')];
   function syncHairUI() {
     hairPicker.hidden = (active !== characters[0]);
     btnHair.forEach(function (b, j) { b.setAttribute('aria-pressed', active.hair === j + 1 ? 'true' : 'false'); });
