@@ -212,6 +212,36 @@
       [5.50, 0.74, 1.0, 0.90, 0.74],     /* largura e fundo diminuem devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5) */
       [5.00, 0.65, 1.0, 0.90, 0.70]      /* última fileira: pontas em dente (uma mecha mais baixa, a vizinha mais alta) */
     ];
+    /* ---------- a cortina não pode entrar no corpo ----------
+       Os pontos das fileiras são calculados num arco circular, mas o tronco é achatado (z × 0,6) e tem 8 lados: nas laterais,
+       a cortina passava por dentro dele e das mangas. Depois de calcular cada ponto, o z é empurrado para trás da superfície de
+       trás do tronco (ou da manga), com uma folga. Só o z muda, então a largura e o desenho da cortina continuam como eram.
+       Os números do tronco e da manga são os da camiseta e do braço mais abaixo (tronco: raio 0,5 em y = 6,7 e 1,0 em y = 4,4,
+       8 lados, z × 0,6; manga curta: do ombro (±0,69; 6,7; 0) até (±0,86; 5,84; 0,05), raio 0,26 → 0,38). Se mudar um, mude o outro. */
+    var HAIR_GAP = 0.07;
+    function torsoBackZ(x, y) {
+      if (y > 6.7 || y < 4.4) return null;
+      var r = 0.5 + 0.5 * (6.7 - y) / 2.3, ax = Math.abs(x);
+      if (ax >= r) return null;
+      var c = Math.SQRT1_2 * r;                                   /* x do vértice a 135° (o de trás, a 180°, fica em x = 0) */
+      return ax <= c ? -0.6 * r + (0.6 * r - 0.6 * c) * (ax / c)
+                     : -0.6 * c * (1 - (ax - c) / (r - c));
+    }
+    function sleeveBackZ(x, y) {
+      /* acima do ombro (até 6,95) a zona proibida continua como cilindro reto: sem isso, as arestas entre a fileira de cima (y = 6,85,
+         acima da manga) e a de baixo atravessavam o topo da manga */
+      if (y > 6.95 || y < 5.844) return null;
+      var t = Math.max(0, (6.7 - y) / 0.856);
+      var d = Math.abs(x) - (0.69 + 0.17 * t), rad = 0.26 + 0.12 * t;
+      if (Math.abs(d) >= rad) return null;
+      return 0.05 * t - Math.sqrt(rad * rad - d * d);
+    }
+    function keepOutOfBody(p) {
+      var z = torsoBackZ(p.x, p.y), s = sleeveBackZ(p.x, p.y);
+      if (s !== null && (z === null || s < z)) z = s;
+      if (z !== null && p.z > z - HAIR_GAP) p.z = z - HAIR_GAP;
+      return p;
+    }
     /* chave de vértice da esfera-fonte: arredonda para 3 casas e tira o −0, para o mesmo vértice dar a mesma chave em todos os triângulos */
     function vKey(x, y, z) {
       function f(v) { return (Math.round(v * 1000) / 1000 + 0).toFixed(3); }
@@ -265,7 +295,7 @@
           var th = th0[i] * H[4];
           var kk = 1 + noise3(th * 2, H[0], 1.3) * 0.04;
           var jag = r === HANG_ROWS.length - 1 ? ((i & 1) ? -0.32 : 0.12) : 0;
-          row.push(new THREE.Vector3(ax + R * H[3] * kk * Math.sin(th), H[0] + jag, az - R * kk * Math.cos(th)));
+          row.push(keepOutOfBody(new THREE.Vector3(ax + R * H[3] * kk * Math.sin(th), H[0] + jag, az - R * kk * Math.cos(th))));
         }
         rows.push(row);
       }
