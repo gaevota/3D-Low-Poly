@@ -466,7 +466,10 @@
       legIn.add(limb(hipP, ankle, 0.26, 0.14, skinM, 8));
 
       /* meia larga com a boca dobrada */
-      legIn.add(limb([s * 0.46, 0.2, 0], [s * 0.46, 1.4, 0], 0.235, 0.25, M.sock, 8));
+      /* a meia é dividida no tornozelo (y = 0,7): a parte de cima fica na perna e a parte de baixo, que está dentro do
+         tênis, é colocada no próprio tênis (mais abaixo) para girar junto com ele. Antes ela ficava parada e,
+         no fim do passo da corrida, a ponta branca da meia furava o cabedal e aparecia como um pontinho. */
+      legIn.add(limb([s * 0.46, 0.7, 0], [s * 0.46, 1.4, 0], 0.2413, 0.25, M.sock, 8));
       legIn.add(limb([s * 0.46, 1.25, 0], [s * 0.46, 1.55, 0], 0.29, 0.3, M.sock, 8));
 
       /* tênis */
@@ -477,6 +480,7 @@
       shoe.position.set(0, -0.7, 0);
       shoe.rotation.y = s * 0.12;
       shoePivot.add(shoe);
+      shoe.add(limb([0, 0.2, 0], [0, 0.95, 0], 0.235, 0.2434, M.sock, 8));   /* parte da meia dentro do tênis */
       /* sola: contorno angular (x, z) extrudado para cima; camada cinza embaixo + entressola branca */
       var SOLE = [[-0.18,-0.38],[0.18,-0.38],[0.31,-0.28],[0.34,0.10],[0.33,0.60],[0.30,0.95],[0.22,1.20],[0.08,1.30],
                   [-0.08,1.30],[-0.22,1.20],[-0.30,0.95],[-0.33,0.60],[-0.34,0.10],[-0.31,-0.28]];
