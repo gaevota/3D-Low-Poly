@@ -40,10 +40,6 @@
         <button type="button" id="btnBang" aria-pressed="false">Colocar franja</button>
       </div>
     </div>
-    <div class="fem" role="group" aria-labelledby="fem-label">
-      <span class="tabs-title" id="fem-label">Feminino</span>
-      <button type="button" id="btnDress" aria-pressed="false">Vestido</button>
-    </div>
     <div class="colors" role="group" aria-labelledby="color-label">
       <span class="tabs-title" id="color-label">Cor</span>
       <div class="parts" id="partBtns"></div>
@@ -52,7 +48,22 @@
     </div>
   </div>
 
-  <div id="stage"></div>
+  <div class="main">
+    <div id="stage"></div>
+
+    <aside class="wardrobe" id="wardrobe" aria-labelledby="wardrobe-label">
+      <h2 class="tabs-title" id="wardrobe-label">Roupas</h2>
+      <div class="wardrobe-group" role="group" aria-labelledby="outfit-m-label">
+        <span class="tabs-title" id="outfit-m-label">Masculino</span>
+        <button type="button" data-outfit="masculino" aria-pressed="true">Camiseta e shorts</button>
+      </div>
+      <div class="wardrobe-group" role="group" aria-labelledby="outfit-f-label">
+        <span class="tabs-title" id="outfit-f-label">Feminino</span>
+        <button type="button" data-outfit="vestido" aria-pressed="false">Vestido</button>
+        <button type="button" data-outfit="saia" aria-pressed="false">Camiseta e saia</button>
+      </div>
+    </aside>
+  </div>
 
   <footer>
     <div class="btns" id="viewerBtns">

@@ -90,11 +90,42 @@ h1 {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* palco à esquerda, painel de roupas no canto direito */
+.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+}
 #stage {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   position: relative;
   overflow: hidden;
+}
+.wardrobe {
+  flex: 0 0 176px;
+  box-sizing: border-box;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 12px;
+}
+.wardrobe h2 { margin: 0; }
+.wardrobe-group { display: flex; flex-direction: column; gap: 6px; }
+.wardrobe-group button { width: 100%; text-align: left; padding: 10px 12px; line-height: 1.2; }
+/* telas estreitas: o painel passa para baixo do palco, em linha */
+@media (max-width: 640px) {
+  .main { flex-direction: column; }
+  .wardrobe { flex: 0 0 auto; align-self: stretch; flex-direction: row; flex-wrap: wrap; gap: 8px 16px; }
+  .wardrobe h2 { flex-basis: 100%; }
+  .wardrobe-group { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .wardrobe-group button { width: auto; }
 }
 #stage canvas {
   display: block;
@@ -146,7 +177,7 @@ button[aria-selected="true"] {
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .tab { min-height: 34px; }
 /* Opção de cabelo */
-.hair, .fem { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.hair { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* Cor da camiseta, do shorts e do tênis */
 .colors { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
 .parts { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -184,7 +215,8 @@ button.primary {
 /* Tela cheia: sem título e abas, palco na janela toda, controles por cima embaixo */
 .immersive .app { padding: 0; gap: 0; }
 .immersive header,
-.immersive .tabs-bar { display: none; }
+.immersive .tabs-bar,
+.immersive .wardrobe { display: none; }
 .immersive footer {
   position: fixed;
   left: 0;

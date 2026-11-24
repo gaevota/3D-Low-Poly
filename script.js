@@ -562,17 +562,21 @@
       legIn.add(shoe);
     });
 
-    /* ---------- vestido: reaproveita a camiseta (mesmo material, então a cor é a mesma) e troca o shorts por uma saia ----------
-       A saia começa onde a camiseta termina (y = 4,4, raio 1,0, mesma achatada em z) e abre um pouco até o meio da coxa. */
+    /* ---------- roupas: masculino (camiseta e shorts) · feminino (vestido ou camiseta e saia) ----------
+       A saia começa onde a camiseta termina (y = 4,4, raio 1,0, mesma achatada em z) e abre um pouco até o meio da coxa.
+       Vestido: a saia usa o material da camiseta (mesma cor) e o shorts some.
+       Camiseta e saia: a camiseta fica como está e a saia usa o material do shorts (a cor do "shorts" vira a da saia). */
     var skirt = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.12, 1.3, 8, 1), shirtM);
     skirt.scale.z = 0.6;
     skirt.position.y = 3.75;          /* de 3,1 a 4,4 */
     skirt.visible = false;
     character.add(skirt);
-    function setDress(on) {
-      shortsParts.forEach(function (m) { m.visible = !on; });
-      skirt.visible = on;
-      result.dress = on;
+    /* mode = 'masculino' | 'vestido' | 'saia' */
+    function setOutfit(mode) {
+      shortsParts.forEach(function (m) { m.visible = (mode === 'masculino'); });
+      skirt.visible = (mode !== 'masculino');
+      skirt.material = (mode === 'vestido') ? shirtM : shortsM;
+      result.outfit = mode;
     }
 
     var result = { character: character, armRG: armRG, armLG: armLG, hand1: hand1, handBaseQ: handBaseQ, handUp: handUp, handX: H1[0], legs: legs,
@@ -583,7 +587,7 @@
                      skin: { main: [skinM, skinSmoothM], dark: [skinShadeM], k: 0.87, hex: null },   /* as orelhas usam o tom escuro */
                      hair: { main: [hairM], dark: [], hex: null }
                    },
-                   hair: 1, bang: variant === 1, setHair: setHair, setBang: setBang, dress: false, setDress: setDress };
+                   hair: 1, bang: variant === 1, setHair: setHair, setBang: setBang, outfit: 'masculino', setOutfit: setOutfit };
     Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
     return result;
   }
@@ -637,7 +641,7 @@
     charName.textContent = active.name;
     syncColorUI();
     syncHairUI();
-    syncDressUI();
+    syncOutfitUI();
     updateCount();
   }
   for (var ci = 0; ci < NUM_CHARACTERS; ci++) {
@@ -755,21 +759,29 @@
     b.addEventListener('click', function () { active.setHair(Number(b.getAttribute('data-hair'))); syncHairUI(); updateCount(); });
   });
   btnBang.addEventListener('click', function () { active.setBang(!active.bang); syncHairUI(); updateCount(); });
-  /* ---------- feminino: vestido (a camiseta vira o vestido e o shorts some) ---------- */
-  var btnDress = document.getElementById('btnDress');
-  function syncDressUI() {
-    btnDress.setAttribute('aria-pressed', active.dress ? 'true' : 'false');
+  /* ---------- roupas (painel no canto direito) ----------
+     Masculino: camiseta e shorts (a roupa original) · Feminino: vestido (a camiseta vira o vestido e o shorts some)
+     ou camiseta e saia (a saia ocupa o lugar do shorts e usa a cor dele) */
+  var outfitBtns = Array.prototype.slice.call(document.querySelectorAll('[data-outfit]'));
+  function syncOutfitUI() {
+    var o = active.outfit;
+    outfitBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-outfit') === o ? 'true' : 'false'); });
     partBtns.forEach(function (b) {
       var k = b.getAttribute('data-part');
-      if (k === 'shorts') b.hidden = active.dress;                       /* sem shorts, não há o que pintar */
-      if (k === 'shirt') b.textContent = active.dress ? 'Vestido' : 'Camiseta';
+      if (k === 'shorts') {
+        b.hidden = (o === 'vestido');                                     /* no vestido não há shorts nem saia separada para pintar */
+        b.textContent = (o === 'saia') ? 'Saia' : 'Shorts';
+      }
+      if (k === 'shirt') b.textContent = (o === 'vestido') ? 'Vestido' : 'Camiseta';
     });
-    if (active.dress && curPart === 'shorts') { curPart = 'shirt'; buildSwatches(); syncColorUI(); }
+    if (o === 'vestido' && curPart === 'shorts') { curPart = 'shirt'; buildSwatches(); syncColorUI(); }
   }
-  btnDress.addEventListener('click', function () {
-    active.setDress(!active.dress);
-    syncDressUI();
-    updateCount();
+  outfitBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      active.setOutfit(b.getAttribute('data-outfit'));
+      syncOutfitUI();
+      updateCount();
+    });
   });
   selectCharacter(0);
 
@@ -981,6 +993,7 @@
     document.getElementById('viewerBtns').hidden = on;
     document.getElementById('viewerHint').hidden = on;
     document.getElementById('tabsBar').hidden = on;
+    document.getElementById('wardrobe').hidden = on;
     document.getElementById('playBtns').hidden = !on;
     document.getElementById('playHint').hidden = !on;
     canvas.setAttribute('aria-label', on ? PLAY_LABEL : VIEW_LABEL);
