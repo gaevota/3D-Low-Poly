@@ -466,9 +466,10 @@
       legIn.add(limb(hipP, ankle, 0.26, 0.14, skinM, 8));
 
       /* meia larga com a boca dobrada */
-      /* a meia é dividida bem dentro do tênis (entre y = 0,55 e 0,65, abaixo da boca do tênis, que fica em y = 0,78, então a
-         emenda não aparece): a parte de cima fica na perna e a parte de baixo é colocada no próprio tênis para girar junto com ele. Antes ela ficava parada e,
-         no fim do passo da corrida, a ponta branca da meia furava o cabedal e aparecia como um pontinho. */
+      /* a meia é dividida bem dentro do tênis (entre y = 0,55 e 0,65, abaixo da boca do tênis, que fica em y = 0,78,
+         então a emenda não aparece): a parte de cima fica na perna e a parte de baixo é colocada no próprio tênis
+         para girar junto com ele. Antes ela ficava parada e, no fim do passo da corrida, a ponta branca da meia
+         furava o cabedal e aparecia como um pontinho. */
       legIn.add(limb([s * 0.46, 0.55, 0], [s * 0.46, 1.4, 0], 0.2394, 0.25, M.sock, 8));
       legIn.add(limb([s * 0.46, 1.25, 0], [s * 0.46, 1.55, 0], 0.29, 0.3, M.sock, 8));
 
