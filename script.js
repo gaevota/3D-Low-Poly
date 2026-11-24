@@ -1012,6 +1012,38 @@
   lampLight.position.set(0, ROOM_H - 1.9, 0);
   room.add(lampLight);
 
+  /* interruptor de parede (parede do fundo): placa + alavanca que vira para cima (ligado) ou para baixo (desligado) */
+  var SWITCH_POS = { x: 6, y: 5, z: -ROOM_D / 2 };
+  var SWITCH_REACH = 5;                       /* distância (no chão) para apertar com a tecla E */
+  M.switchPlate = mat(0xf4f1ea);
+  M.switchLever = mat(0xc9c3b4);
+  var wallSwitch = new THREE.Group();
+  wallSwitch.position.set(SWITCH_POS.x, SWITCH_POS.y, SWITCH_POS.z + 0.08);
+  room.add(wallSwitch);
+  var swPlate = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2, 0.16), M.switchPlate);
+  wallSwitch.add(swPlate);
+  var swLever = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.85, 0.22), M.switchLever);
+  swLever.position.z = 0.1;
+  wallSwitch.add(swLever);
+
+  /* luz da sala: liga/desliga a lâmpada (a luz ambiente fica bem fraca para a sala não sumir por completo) */
+  var lightOn = true;
+  var LAMP_INTENSITY = 1.15, AMBIENT_ON = 0.65, AMBIENT_OFF = 0.1;
+  function setLight(on) {
+    lightOn = on;
+    lampLight.intensity = on ? LAMP_INTENSITY : 0;
+    if (playing) hemi.intensity = on ? AMBIENT_ON : AMBIENT_OFF;
+    M.bulb.color.set(on ? 0xfff2c4 : 0x4a4a52);
+    swLever.rotation.x = on ? -0.4 : 0.4;
+    swLever.position.y = on ? 0.18 : -0.18;
+    var b = document.getElementById('btnLight');
+    if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function nearSwitch() {
+    var dx = pl.x - SWITCH_POS.x, dz = pl.z - SWITCH_POS.z;
+    return Math.sqrt(dx * dx + dz * dz) <= SWITCH_REACH;
+  }
+
   /* ---------- jogo: botão, menu de ambientes e controles ---------- */
   var LIM_X = ROOM_W / 2 - 2.2, LIM_Z = ROOM_D / 2 - 2.2;   /* limite dos pés da personagem */
   var WALK_SPEED = 8, RUN_SPEED = 15;
@@ -1038,8 +1070,8 @@
   var VIEW_LABEL = canvas.getAttribute('aria-label');
   var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse para girar a câmera. As teclas 1 e 2 trocam a vista; na vista 2, as setas e o mouse olham para cima, até o teto.';
 
-  var HINT_V1 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · arraste para girar a câmera · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
-  var HINT_V2 = 'W A S D para andar · Shift para correr · Espaço para pular · setas ou arraste giram a câmera e olham o teto · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
+  var HINT_V1 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · arraste para girar a câmera · 1 e 2 trocam a vista · L liga/desliga a luz (ou E perto do interruptor) · F tela cheia · Esc para sair';
+  var HINT_V2 = 'W A S D para andar · Shift para correr · Espaço para pular · setas ou arraste giram a câmera e olham o teto · 1 e 2 trocam a vista · L liga/desliga a luz (ou E perto do interruptor) · F tela cheia · Esc para sair';
   function setView(n) {
     camView = n;
     camPitch = n === 2 ? VIEW2_PITCH : VIEW1_PITCH;
@@ -1081,7 +1113,7 @@
     c.rotation.order = 'YXZ';                  /* gira o corpo no eixo vertical antes de inclinar */
     c.position.set(pl.x, 0, pl.z);
     VIEW_LIGHTS.forEach(function (l) { l[0].intensity = 0; });
-    hemi.intensity = 0.65;                     /* luz ambiente da sala + a lâmpada no teto */
+    setLight(true);                            /* luz ambiente da sala + a lâmpada no teto (sempre começa acesa) */
     setPlayUI(true);
     canvas.focus();
   }
@@ -1178,6 +1210,7 @@
 
   document.getElementById('btnView1').addEventListener('click', function () { setView(1); canvas.focus(); });
   document.getElementById('btnView2').addEventListener('click', function () { setView(2); canvas.focus(); });
+  document.getElementById('btnLight').addEventListener('click', function () { setLight(!lightOn); canvas.focus(); });
 
   btnPlay.addEventListener('click', openMenu);
   document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);
@@ -1198,6 +1231,16 @@
     if (e.code === 'Digit2' || e.code === 'Numpad2') { setView(2); e.preventDefault(); return; }
     if (e.code === 'KeyF') {
       if (!e.repeat) toggleFullscreen();
+      e.preventDefault();
+      return;
+    }
+    if (e.code === 'KeyL') {                     /* liga/desliga a luz de qualquer lugar da sala */
+      if (!e.repeat) setLight(!lightOn);
+      e.preventDefault();
+      return;
+    }
+    if (e.code === 'KeyE') {                     /* aperta o interruptor da parede quando estiver perto */
+      if (!e.repeat && nearSwitch()) setLight(!lightOn);
       e.preventDefault();
       return;
     }
