@@ -1021,8 +1021,14 @@
   var bulb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), M.bulb);
   bulb.position.y = -1.75;
   lamp.add(bulb);
-  var lampLight = new THREE.PointLight(0xfff0d0, 1.15, 90, 1);
-  lampLight.position.set(0, ROOM_H - 1.9, 0);
+  /* a cúpula só deixa a luz sair para baixo: um refletor (SpotLight) apontado para o chão, no lugar do bulbo.
+     Assim o teto, que fica acima da lâmpada, não recebe luz e não vira uma mancha clara. */
+  var lampLight = new THREE.SpotLight(0xfff0d0, 1.5, 90, 1.45, 0.6, 1);
+  lampLight.position.set(0, ROOM_H - 1.8, 0);
+  var lampTarget = new THREE.Object3D();
+  lampTarget.position.set(0, 0, 0);
+  room.add(lampTarget);
+  lampLight.target = lampTarget;
   room.add(lampLight);
 
   /* interruptor de parede (parede do fundo): placa + alavanca que vira para cima (ligado) ou para baixo (desligado) */
@@ -1041,7 +1047,7 @@
 
   /* luz da sala: liga/desliga a lâmpada (a luz ambiente fica bem fraca para a sala não sumir por completo) */
   var lightOn = true;
-  var LAMP_INTENSITY = 1.15, AMBIENT_ON = 0.65, AMBIENT_OFF = 0.1;
+  var LAMP_INTENSITY = 1.5, AMBIENT_ON = 0.65, AMBIENT_OFF = 0.1;
   function setLight(on) {
     lightOn = on;
     lampLight.intensity = on ? LAMP_INTENSITY : 0;
