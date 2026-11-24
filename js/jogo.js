@@ -60,6 +60,7 @@ function startGame(envId) {
   if (envId !== 'sala-vazia') return;        /* por enquanto só existe este ambiente */
   menu.hidden = true;
   playing = true;
+  initSom();                                 /* som dos passos (som.js): começa aqui, dentro do clique que abriu o jogo */
   keys = {}; moving = false; sprint = false;
   pl.x = 0; pl.y = 0; pl.vy = 0; pl.z = 8; pl.face = Math.PI;     /* de costas para a câmera */
   camYaw = 0; setView(1);

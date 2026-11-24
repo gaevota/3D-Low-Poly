@@ -63,6 +63,7 @@ function frame(now) {
   });
   a.armLG.rotation.x = sw * aa;
   a.armRG.rotation.x = waveT0 >= 0 ? 0 : -sw * aa;
+  if (playing) updateFootsteps(walkPh, moving && pl.y === 0, runK > 0.5);   /* som dos passos (som.js): só no jogo e com os pés no chão */
   a.character.position.y = (playing ? pl.y : -4.6) + footLift(a, 0.12 * runK);
   if (playing) {
     a.character.position.x = pl.x;

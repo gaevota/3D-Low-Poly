@@ -16,6 +16,7 @@ var SCRIPTS = [
   'js/camera.js',       /* câmera e controles do visualizador */
   'js/sala.js',         /* sala do jogo: chão, paredes, lâmpada e interruptor */
   'js/jogo.js',         /* modo jogo: menu, vistas, tela cheia, teclado e movimento */
+  'js/som.js',          /* som dos passos no jogo (andar e correr) */
   'js/animacao.js'      /* pés no chão e o laço de animação (sempre o último) */
 ];
 
