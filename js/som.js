@@ -100,15 +100,13 @@ function synthStep(running, vol) {
 
 /* ---------- sons dos botões ----------
    Cada tipo de botão tem o seu som, em audio/:
-     roupas.mp3        botões do painel Roupas (roupa e manga)
-     cores.mp3         botões de Cor (peça a pintar e as cores da paleta)
-     botoes.mp3        todos os outros botões
+     cores.mp3         só as bolinhas de cor da paleta
+     botoes.mp3        todos os outros botões (inclusive Roupas e os botões de peça: Camiseta, Shorts, Tênis, Pele, Cabelo)
      iniciar-jogo.mp3  Jogar e a escolha do ambiente
      interruptor.mp3   Colocar/Tirar franja e o interruptor de parede da sala (sala.js chama playUi('interruptor'))
    Um único ouvinte de clique na página inteira descobre de que tipo é o botão clicado (uiKind), então botões criados depois
    (como as cores, montadas em interface.js) já saem com o som certo. Arquivo que não existir é ignorado: o botão fica sem som. */
 var UI_FILES = {
-  roupas: 'audio/roupas.mp3',
   cores: 'audio/cores.mp3',
   botoes: 'audio/botoes.mp3',
   inicio: 'audio/iniciar-jogo.mp3',
@@ -136,8 +134,7 @@ function playUi(kind) {
 function uiKind(b) {
   if (b.id === 'btnBang') return 'interruptor';
   if (b.id === 'btnPlay' || b.classList.contains('env')) return 'inicio';
-  if (b.closest('#wardrobe')) return 'roupas';
-  if (b.closest('#partBtns') || b.closest('#colorSwatches')) return 'cores';
+  if (b.closest('#colorSwatches')) return 'cores';
   return 'botoes';
 }
 

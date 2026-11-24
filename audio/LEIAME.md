@@ -17,9 +17,8 @@ Um som para cada tipo de botão (mp3 curto, cerca de 1 s ou menos):
 
 | Arquivo            | Quando toca                                                                  |
 | ------------------ | ---------------------------------------------------------------------------- |
-| `roupas.mp3`       | botões do painel Roupas (roupa e manga)                                      |
-| `cores.mp3`        | botões de Cor (peça a pintar e as cores da paleta)                           |
-| `botoes.mp3`       | todos os outros botões                                                       |
+| `cores.mp3`        | só as bolinhas de cor da paleta                                              |
+| `botoes.mp3`       | todos os outros botões (inclusive Roupas e os de peça: Camiseta, Pele...)    |
 | `iniciar-jogo.mp3` | Jogar e a escolha do ambiente                                                |
 | `interruptor.mp3`  | Colocar/Tirar franja e o interruptor de parede da sala, no jogo              |
 
