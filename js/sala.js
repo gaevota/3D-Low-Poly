@@ -118,6 +118,6 @@ function overSwitch(e) {
 }
 function clickSwitch(e) {
   if (!overSwitch(e)) return;
-  if (nearSwitch()) setLight(!lightOn);
+  if (nearSwitch()) { setLight(!lightOn); playUi('interruptor'); }
   else showNote('Chegue mais perto do interruptor para ligar ou desligar a luz.');
 }

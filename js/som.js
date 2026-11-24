@@ -1,6 +1,6 @@
 /* ============================================================================
-   som.js — som dos passos no modo jogo (andar e correr).
-   Define: initSom(), updateFootsteps(), playStep(), STEP_FILES
+   som.js — sons: passos no modo jogo (andar e correr) e cliques dos botões da página.
+   Define: initSom(), updateFootsteps(), playStep(), STEP_FILES, playUi(), UI_FILES
    Usa:    walkPh, runK, playing (camera.js / animacao.js), moving, pl (jogo.js)
    ============================================================================ */
 
@@ -97,3 +97,51 @@ function synthStep(running, vol) {
   o.connect(g2); g2.connect(audioCtx.destination);
   o.start(t); o.stop(t + 0.12);
 }
+
+/* ---------- sons dos botões ----------
+   Cada tipo de botão tem o seu som, em audio/:
+     roupas.mp3        botões do painel Roupas (roupa e manga)
+     cores.mp3         botões de Cor (peça a pintar e as cores da paleta)
+     botoes.mp3        todos os outros botões
+     iniciar-jogo.mp3  Jogar e a escolha do ambiente
+     interruptor.mp3   Colocar/Tirar franja e o interruptor de parede da sala (sala.js chama playUi('interruptor'))
+   Um único ouvinte de clique na página inteira descobre de que tipo é o botão clicado (uiKind), então botões criados depois
+   (como as cores, montadas em interface.js) já saem com o som certo. Arquivo que não existir é ignorado: o botão fica sem som. */
+var UI_FILES = {
+  roupas: 'audio/roupas.mp3',
+  cores: 'audio/cores.mp3',
+  botoes: 'audio/botoes.mp3',
+  inicio: 'audio/iniciar-jogo.mp3',
+  interruptor: 'audio/interruptor.mp3'
+};
+var UI_VOL = 0.6;
+var uiSamples = {};              /* os <audio> que carregaram, por tipo */
+Object.keys(UI_FILES).forEach(function (kind) {
+  var a = new Audio();
+  a.preload = 'auto';
+  a.addEventListener('canplaythrough', function () { uiSamples[kind] = a; });
+  a.src = UI_FILES[kind];
+  a.load();
+});
+
+function playUi(kind) {
+  var a = uiSamples[kind];
+  if (!a) return;
+  var s = a.cloneNode(true);     /* cópia: cliques rápidos podem se sobrepor */
+  s.volume = UI_VOL;
+  var p = s.play();
+  if (p && p.catch) p.catch(function () {});
+}
+
+function uiKind(b) {
+  if (b.id === 'btnBang') return 'interruptor';
+  if (b.id === 'btnPlay' || b.classList.contains('env')) return 'inicio';
+  if (b.closest('#wardrobe')) return 'roupas';
+  if (b.closest('#partBtns') || b.closest('#colorSwatches')) return 'cores';
+  return 'botoes';
+}
+
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('button');
+  if (b) playUi(uiKind(b));
+});
