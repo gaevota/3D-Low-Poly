@@ -132,8 +132,16 @@
       head.add(e);
       var pu = ico(0.085, 0, M.pupil, 1, 1.25, 0.5);
       pu.position.set(p.x, p.y - 0.005, p.z + 0.03);
+      /* brilho branco: fica colado na superfície do olho. Procuro onde o olho (inclinado e facetado) realmente está
+         naquele ponto, em vez de um z fixo, que deixava o brilho flutuando na frente do olho. */
       var hi = ico(0.035, 0, M.hi, 1, 1, 0.5);
-      hi.position.set(p.x + 0.05, p.y + 0.07, p.z + 0.1);
+      var hx = p.x + 0.05, hy = p.y + 0.07;
+      e.updateMatrix();
+      e.matrixWorld.copy(e.matrix);               /* aqui o "mundo" é o espaço da cabeça */
+      ray.set(new THREE.Vector3(hx, hy, 5), new THREE.Vector3(0, 0, -1));
+      var hit = ray.intersectObject(e, false)[0];
+      hi.position.set(hx, hy, (hit ? hit.point.z : p.z + 0.06) + 0.008);
+      hi.rotation.y = s * 0.35;                   /* acompanha a inclinação do olho */
       head.add(hi);
       var lid = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.05), browM);
       lid.position.set(p.x, p.y + 0.28, p.z - 0.005);
