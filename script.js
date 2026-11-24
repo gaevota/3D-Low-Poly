@@ -876,7 +876,7 @@
   syncSpin();
 
   canvas.addEventListener('pointerdown', function (e) {
-    drag = { x: e.clientX, y: e.clientY };
+    drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY };
     try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     if (auto && !playing) { auto = false; syncSpin(); }
   });
@@ -893,7 +893,16 @@
     drag.x = e.clientX; drag.y = e.clientY;
   });
   function endDrag() { drag = null; }
-  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointerup', function (e) {
+    /* um clique (quase sem arrastar) no interruptor da parede liga/desliga a luz */
+    if (drag && playing && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 5) clickSwitch(e);
+    endDrag();
+  });
+  /* cursor de "mão" ao passar o mouse no interruptor quando estiver perto dele */
+  canvas.addEventListener('pointermove', function (e) {
+    if (drag) return;
+    canvas.style.cursor = (playing && nearSwitch() && overSwitch(e)) ? 'pointer' : '';
+  });
   canvas.addEventListener('pointercancel', endDrag);
   canvas.addEventListener('wheel', function (e) {
     e.preventDefault();
@@ -1036,12 +1045,26 @@
     M.bulb.color.set(on ? 0xfff2c4 : 0x4a4a52);
     swLever.rotation.x = on ? -0.4 : 0.4;
     swLever.position.y = on ? 0.18 : -0.18;
-    var b = document.getElementById('btnLight');
-    if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
   function nearSwitch() {
     var dx = pl.x - SWITCH_POS.x, dz = pl.z - SWITCH_POS.z;
     return Math.sqrt(dx * dx + dz * dz) <= SWITCH_REACH;
+  }
+  /* área de clique do interruptor: caixa invisível maior que a placa, para ficar fácil de acertar de longe */
+  var swHit = new THREE.Mesh(new THREE.BoxGeometry(3.2, 4, 1.2), new THREE.MeshBasicMaterial({ visible: false }));
+  wallSwitch.add(swHit);
+  var raycaster = new THREE.Raycaster();
+  var ndc = new THREE.Vector2();
+  function overSwitch(e) {
+    var r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    return raycaster.intersectObject(swHit, false).length > 0;
+  }
+  function clickSwitch(e) {
+    if (!overSwitch(e)) return;
+    if (nearSwitch()) setLight(!lightOn);
+    else showNote('Chegue mais perto do interruptor para ligar ou desligar a luz.');
   }
 
   /* ---------- jogo: botão, menu de ambientes e controles ---------- */
@@ -1070,8 +1093,8 @@
   var VIEW_LABEL = canvas.getAttribute('aria-label');
   var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse para girar a câmera. As teclas 1 e 2 trocam a vista; na vista 2, as setas e o mouse olham para cima, até o teto.';
 
-  var HINT_V1 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · arraste para girar a câmera · 1 e 2 trocam a vista · L liga/desliga a luz (ou E perto do interruptor) · F tela cheia · Esc para sair';
-  var HINT_V2 = 'W A S D para andar · Shift para correr · Espaço para pular · setas ou arraste giram a câmera e olham o teto · 1 e 2 trocam a vista · L liga/desliga a luz (ou E perto do interruptor) · F tela cheia · Esc para sair';
+  var HINT_V1 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · arraste para girar a câmera · 1 e 2 trocam a vista · chegue perto do interruptor na parede e clique nele para a luz · F tela cheia · Esc para sair';
+  var HINT_V2 = 'W A S D para andar · Shift para correr · Espaço para pular · setas ou arraste giram a câmera e olham o teto · 1 e 2 trocam a vista · chegue perto do interruptor na parede e clique nele para a luz · F tela cheia · Esc para sair';
   function setView(n) {
     camView = n;
     camPitch = n === 2 ? VIEW2_PITCH : VIEW1_PITCH;
@@ -1210,7 +1233,6 @@
 
   document.getElementById('btnView1').addEventListener('click', function () { setView(1); canvas.focus(); });
   document.getElementById('btnView2').addEventListener('click', function () { setView(2); canvas.focus(); });
-  document.getElementById('btnLight').addEventListener('click', function () { setLight(!lightOn); canvas.focus(); });
 
   btnPlay.addEventListener('click', openMenu);
   document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);
@@ -1231,16 +1253,6 @@
     if (e.code === 'Digit2' || e.code === 'Numpad2') { setView(2); e.preventDefault(); return; }
     if (e.code === 'KeyF') {
       if (!e.repeat) toggleFullscreen();
-      e.preventDefault();
-      return;
-    }
-    if (e.code === 'KeyL') {                     /* liga/desliga a luz de qualquer lugar da sala */
-      if (!e.repeat) setLight(!lightOn);
-      e.preventDefault();
-      return;
-    }
-    if (e.code === 'KeyE') {                     /* aperta o interruptor da parede quando estiver perto */
-      if (!e.repeat && nearSwitch()) setLight(!lightOn);
       e.preventDefault();
       return;
     }
