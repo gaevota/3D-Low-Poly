@@ -199,12 +199,107 @@
     /* slimBack = fração (0 a 0,15) que o z de trás da casca encolhe (cabelos femininos 1 e 2): fica mais colada atrás da cabeça;
        só o z de trás é encolhido (cheio a partir de z ≤ −0,7), então frente e lados não mudam */
     var SLIM_F1 = 0, SLIM_F2 = 0.08;     /* (feminino 1 era 0,11: menor = casca de trás maior) quanto a casca encolhe atrás: feminino 1 (comprido) e feminino 2 (preso) */
-    function buildShell(longBang, noSideTips, shortCut, slimBack) {
+    /* ---------- Cabelo 3 (feminino 1): mechas longas caindo pelas costas, como parte da própria casca ----------
+       hang = true: a casca ganha uma cortina que sai da borda de baixo dela (costas e laterais) e desce até o meio das
+       costas, terminando em pontas. Os primeiros vértices da cortina SÃO os vértices dessa borda (mais um ponto no meio de
+       cada aresta), então não há emenda nem degrau entre a casca e a cortina. É a mesma malha, presa à cabeça.
+       As fileiras de baixo são definidas no espaço do personagem (como a cortina antiga): a cabeça é inclinada, e assim as
+       mechas caem retas atrás do corpo; depois os pontos voltam para o espaço da cabeça. A frente fica livre (rosto e camiseta). */
+    var HANG_ROWS = [    /* [y, raio-alvo a partir do eixo da cabeça, mistura com o raio da borda da casca (0 a 1), estreitamento em x, fator do arco] */
+      [6.85, 0.82, 0.6, 0.97, 0.94],     /* o arco encolhe aos poucos: a borda que aparece ao lado do pescoço fica reta e sem degraus */
+      [6.40, 0.88, 0.9, 0.93, 0.86],
+      [5.95, 0.82, 1.0, 0.90, 0.79],
+      [5.50, 0.74, 1.0, 0.90, 0.74],     /* largura e fundo diminuem devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5) */
+      [5.00, 0.65, 1.0, 0.90, 0.70]      /* última fileira: pontas em dente (uma mecha mais baixa, a vizinha mais alta) */
+    ];
+    /* chave de vértice da esfera-fonte: arredonda para 3 casas e tira o −0, para o mesmo vértice dar a mesma chave em todos os triângulos */
+    function vKey(x, y, z) {
+      function f(v) { return (Math.round(v * 1000) / 1000 + 0).toFixed(3); }
+      return f(x) + ',' + f(y) + ',' + f(z);
+    }
+    /* borda de baixo da casca nas costas e laterais, como lista de vértices [x, y, z, y-fonte, z-fonte] da esquerda (−x) para a direita */
+    function hangChain(edges, info) {
+      var adj = {}, k;
+      for (k in edges) {
+        var E = edges[k];
+        if (E[2] !== 1) continue;                                 /* aresta de borda: só um triângulo a usa */
+        var ia = info[E[0]], ib = info[E[1]];
+        if (ia[3] > -0.3 || ib[3] > -0.3 || ia[4] > 0.45 || ib[4] > 0.45) continue;    /* só embaixo, atrás e nas laterais (fora da janela do rosto) */
+        (adj[E[0]] = adj[E[0]] || []).push(E[1]);
+        (adj[E[1]] = adj[E[1]] || []).push(E[0]);
+      }
+      var start = null;
+      for (k in adj) if (adj[k].length === 1 && (start === null || info[k][0] < info[start][0])) start = k;
+      var chain = [], seen = {}, cur = start;
+      while (cur !== null) {
+        seen[cur] = true;
+        chain.push(info[cur]);
+        var nxt = null;
+        for (var j = 0; j < adj[cur].length; j++) if (!seen[adj[cur][j]]) nxt = adj[cur][j];
+        cur = nxt;
+      }
+      return chain;
+    }
+    /* triângulos da cortina (coordenadas da cabeça) a partir da borda da casca */
+    function buildHang(chain) {
+      head.updateMatrix();
+      var M = head.matrix, inv = new THREE.Matrix4().copy(M).invert();
+      var ax = head.position.x, az = head.position.z, i, r;
+      var ring0 = [];
+      for (i = 0; i < chain.length; i++) {
+        ring0.push(new THREE.Vector3(chain[i][0], chain[i][1], chain[i][2]).applyMatrix4(M));
+        if (i < chain.length - 1) {
+          ring0.push(new THREE.Vector3((chain[i][0] + chain[i + 1][0]) / 2, (chain[i][1] + chain[i + 1][1]) / 2, (chain[i][2] + chain[i + 1][2]) / 2).applyMatrix4(M));
+        }
+      }
+      var n = ring0.length, th0 = [], r0 = [];
+      for (i = 0; i < n; i++) {
+        th0.push(Math.atan2(ring0[i].x - ax, -(ring0[i].z - az)));      /* 0 = bem atrás */
+        r0.push(Math.hypot(ring0[i].x - ax, ring0[i].z - az));
+      }
+      var rows = [ring0];
+      for (r = 0; r < HANG_ROWS.length; r++) {
+        var H = HANG_ROWS[r], row = [];
+        for (i = 0; i < n; i++) {
+          var R = r0[i] * (1 - H[2]) + H[1] * H[2];
+          var th = th0[i] * H[4];
+          var kk = 1 + noise3(th * 2, H[0], 1.3) * 0.04;
+          var jag = r === HANG_ROWS.length - 1 ? ((i & 1) ? -0.32 : 0.12) : 0;
+          row.push(new THREE.Vector3(ax + R * H[3] * kk * Math.sin(th), H[0] + jag, az - R * kk * Math.cos(th)));
+        }
+        rows.push(row);
+      }
+      var out = [];
+      function put(p) { var q = p.clone().applyMatrix4(inv); out.push(q.x, q.y, q.z); }
+      for (r = 0; r < rows.length - 1; r++) {
+        for (i = 0; i < n - 1; i++) {
+          var a = rows[r][i], b = rows[r][i + 1], c = rows[r + 1][i], d = rows[r + 1][i + 1];
+          put(a); put(c); put(b);
+          put(b); put(c); put(d);
+        }
+      }
+      return out;
+    }
+    /* junta duas geometrias já coloridas (posição + cor) em uma só */
+    function mergeGeo(a, b) {
+      var pa = a.attributes.position.array, pb = b.attributes.position.array;
+      var ca = a.attributes.color.array, cb = b.attributes.color.array;
+      var pos = new Float32Array(pa.length + pb.length), col = new Float32Array(ca.length + cb.length);
+      pos.set(pa); pos.set(pb, pa.length);
+      col.set(ca); col.set(cb, ca.length);
+      var g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      return g;
+    }
+    /* hang = true gera a cortina comprida do "Cabelo 3" (feminino 1) como parte da casca */
+    function buildShell(longBang, noSideTips, shortCut, slimBack, hang) {
     slimBack = slimBack || 0;      /* sem o argumento (cabelo 1 masculino na primeira montagem) = sem encolher; undefined dava NaN e o cabelo sumia */
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
     var sp = shellSrc.attributes.position;
     var kept = [];
+    var edges = {}, info = {};      /* só para a cortina (hang): arestas da casca, com quantos triângulos usam cada uma, e posição de cada vértice */
     for (var fi = 0; fi < sp.count; fi += 3) {
       var cx = (sp.getX(fi) + sp.getX(fi + 1) + sp.getX(fi + 2)) / 3;
       var cy = (sp.getY(fi) + sp.getY(fi + 1) + sp.getY(fi + 2)) / 3;
@@ -214,8 +309,11 @@
       /* Cabelo 3: as duas facetas da frente de baixo (x ≈ ±0,55, z ≈ 0,27, na borda inferior) apareciam como dois triângulos escuros de cada lado do pescoço */
       var sideTip = noSideTips && Math.abs(cx) > 0.45 && cz > 0.15 && cz < 0.35 && cy < -0.6;
       if (bottomOpen || faceWindow || sideTip) continue;
+      var keys = [];
       for (var q = 0; q < 3; q++) {
         var vx = sp.getX(fi + q), vy = sp.getY(fi + q), vz = sp.getZ(fi + q);
+        var vkey = vKey(vx, vy, vz), srcY = vy, srcZ = vz;
+        keys.push(vkey);
         /* Personagem 2, franja: o vértice do cabelo que forma o "bico" no meio da testa
            (0; 0,526; 0,851 na esfera) desce, então o triângulo de cabelo do meio da testa
            fica comprido e termina perto das sobrancelhas. O vértice continua sobre a esfera. */
@@ -227,81 +325,43 @@
         var fl = vy < 0 ? 1 + 0.14 * (-vy) : 1;
         var bk = slimBack ? Math.max(0, Math.min(1, -vz / 0.7)) : 0;
         var bz = 1 - slimBack * bk * bk * (3 - 2 * bk);
-        kept.push(vx * rr * fl * 1.12 + SHELL_C.x, vy * rr * 1.2 + SHELL_C.y, vz * rr * fl * 1.12 * bz + SHELL_C.z);
+        var px = vx * rr * fl * 1.12 + SHELL_C.x, py = vy * rr * 1.2 + SHELL_C.y, pz = vz * rr * fl * 1.12 * bz + SHELL_C.z;
+        kept.push(px, py, pz);
+        if (hang) info[vkey] = [px, py, pz, srcY, srcZ];
+      }
+      if (hang) {
+        for (var e = 0; e < 3; e++) {
+          var ka = keys[e], kb = keys[(e + 1) % 3], ek = ka < kb ? ka + '|' + kb : kb + '|' + ka;
+          if (edges[ek]) edges[ek][2]++; else edges[ek] = [ka, kb, 1];
+        }
       }
     }
     var shellGeo = new THREE.BufferGeometry();
     shellGeo.setAttribute('position', new THREE.Float32BufferAttribute(kept, 3));
     bake(shellGeo, 0xffffff, SHELL_C, 0.06);       /* só claro/escuro; a cor do cabelo vem do material */
+    if (hang) {
+      var chain = hangChain(edges, info);
+      if (chain.length > 1) {
+        var hangGeo = new THREE.BufferGeometry();
+        hangGeo.setAttribute('position', new THREE.Float32BufferAttribute(buildHang(chain), 3));
+        rnd = rng(11);
+        /* centro só para decidir o lado de fora de cada faceta (a cortina fica abaixo do centro da casca): ponto do meio das costas, no espaço da cabeça */
+        var hangC = new THREE.Vector3(0, 6.6, -0.1).applyMatrix4(new THREE.Matrix4().copy(head.matrix).invert());
+        bake(hangGeo, 0xffffff, hangC, 0.06);
+        shellGeo = mergeGeo(shellGeo, hangGeo);
+      }
+    }
     return shellGeo;
     }
     var hairMesh = new THREE.Mesh(buildShell(variant === 1), hairM);
     head.add(hairMesh);
 
-    /* ---------- Cabelo 3: mechas longas caindo pelas costas ----------
-       Cortina de poucas facetas atrás e nos lados da cabeça. Fica presa ao corpo (não acompanha a
-       inclinação da cabeça), começa por dentro da casca do cabelo e desce até o meio das costas,
-       terminando em pontas. A frente fica livre para aparecerem o rosto e a camiseta. */
-    /* Perfil de cada fileira: y, meia-largura (x), meia-profundidade (z), centro em z (o fundo fica em centro − profundidade)
-       e o arco em volta, em radianos a partir de bem atrás (1,55 ≈ ±89°: no topo a cortina abraça os lados e tampa o
-       vão escuro sob a cúpula; mais abaixo o arco fecha até 1,22 ≈ ±70°, só costas). O arco muda pouco de uma
-       fileira para a outra, para a borda que aparece ao lado do pescoço ficar reta e sem degraus.
-       Começa por dentro da cúpula do cabelo (fundo em −0,90 a −0,93, a cúpula está em −1,0) e só sai
-       por baixo dela, a partir de y ≈ 7,3, quase na tangente, sem degrau. Depois a largura e o fundo
-       vão diminuindo devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5). */
-    var LONG_RINGS = [
-      [7.9, 0.88, 0.85, -0.05, 1.55],
-      [7.6, 0.88, 0.85, -0.08, 1.55],
-      [7.3, 0.86, 0.82, -0.08, 1.55],
-      [7.0, 0.84, 0.78, -0.07, 1.50],
-      [6.6, 0.82, 0.72, -0.08, 1.42],
-      [6.2, 0.76, 0.64, -0.10, 1.32],
-      [5.8, 0.70, 0.56, -0.11, 1.25],
-      [5.4, 0.64, 0.50, -0.10, 1.22],
-      [5.0, 0.56, 0.44, -0.10, 1.22]
-    ];
-    var LONG_SEGS = 8;                       /* facetas em volta, de um lado ao outro */
-    /* LONG_TUCK(y): quanto recuar o fundo da cortina atrás, por altura (negativo = mais para fora, para trás).
-       −0,06 em todas as fileiras: a cortina fica um pouco mais afastada das costas e da cabeça; lados e frente não mudam. */
-    function LONG_TUCK(y) { return -0.06; }
-    function buildLongHair() {
-      rnd = rng(11);
-      var pts = [];
-      for (var r = 0; r < LONG_RINGS.length; r++) {
-        var ring = LONG_RINGS[r], row = [];
-        for (var s = 0; s <= LONG_SEGS; s++) {
-          var th = (s / LONG_SEGS * 2 - 1) * ring[4];        /* 0 = bem atrás */
-          /* última fileira: pontas em dente, uma mecha mais baixa e a vizinha mais alta */
-          var jag = r === LONG_RINGS.length - 1 ? ((s & 1) ? -0.32 : 0.12) : 0;
-          var kk = 1 + noise3(th * 2, ring[0], 1.3) * 0.04;
-          row.push([ring[1] * kk * Math.sin(th), ring[0] + jag, ring[3] - (ring[2] - LONG_TUCK(ring[0])) * kk * Math.cos(th)]);
-        }
-        pts.push(row);
-      }
-      var lv = [];
-      for (var ra = 0; ra < pts.length - 1; ra++) {
-        for (var sb = 0; sb < LONG_SEGS; sb++) {
-          var p00 = pts[ra][sb], p01 = pts[ra][sb + 1], p10 = pts[ra + 1][sb], p11 = pts[ra + 1][sb + 1];
-          lv.push(p00[0], p00[1], p00[2], p10[0], p10[1], p10[2], p01[0], p01[1], p01[2]);
-          lv.push(p01[0], p01[1], p01[2], p10[0], p10[1], p10[2], p11[0], p11[1], p11[2]);
-        }
-      }
-      var lg = new THREE.BufferGeometry();
-      lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
-      bake(lg, 0xffffff, new THREE.Vector3(0, 6.6, -0.1), 0.06);   /* só claro/escuro; a cor vem do material */
-      return lg;
-    }
-    var longHair = new THREE.Mesh(buildLongHair(), hairM);
-    longHair.visible = false;
-    character.add(longHair);
-
     /* Estilo (result.hair) e franja (result.bang) são independentes: qualquer estilo aceita a franja comprida.
-       Masculino: 1 (padrão) e 5 (curto) · Feminino: 3 (comprido) e 6 (preso, rabo de cavalo longo); os dois femininos têm a casca mais justa atrás */
+       Masculino: 1 (padrão) e 5 (curto) · Feminino: 3 (comprido, com a cortina de mechas como parte da própria casca: hang) e 6 (preso, rabo de cavalo longo); os dois femininos têm a casca mais justa atrás */
     function rebuildHair() {
       var n = result.hair;
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 ? SLIM_F1 : n === 6 ? SLIM_F2 : 0);
-      longHair.visible = (n === 3);
+      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 ? SLIM_F1 : n === 6 ? SLIM_F2 : 0, n === 3);
       ponytail.visible = (n === 6);
     }
     function setHair(n) { result.hair = n; rebuildHair(); }
