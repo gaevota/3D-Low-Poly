@@ -405,7 +405,8 @@
 
     var bodyRoot = character;
     var legs = [];
-    var shortsParts = [];        /* bermuda e listras: somem quando o vestido está ligado */
+    var shortsParts = [];        /* shorts e listras: aparecem só na roupa "camiseta e shorts" */
+    var longShortsParts = [];    /* bermuda longa e listra: aparecem só na roupa "camiseta e bermuda longa" */
     /* ---------- bermuda, pernas, meias e tênis ---------- */
     [-1, 1].forEach(function (s) {
       /* cada perna fica num grupo que gira em torno do quadril (para andar) */
@@ -423,6 +424,21 @@
       stripe.rotation.z = s * 0.09;
       legIn.add(stripe);
       shortsParts.push(stripe);
+
+      /* bermuda longa (masculino): sai do mesmo ponto do shorts (y = 4,4) mas desce até perto do joelho (y = 2,5),
+         em vez de parar em y = 3,3. Cano mais reto (raio 0,46 → 0,52) para as duas pernas não se
+         cruzarem demais ao andar. Fica dentro do grupo da perna, então balança junto com ela. */
+      var slLong = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 1.9, 8, 1), shortsM);
+      slLong.scale.z = 0.85;
+      slLong.position.set(s * 0.42, 3.45, 0);   /* de 2,5 a 4,4 */
+      slLong.visible = false;
+      legIn.add(slLong);
+      longShortsParts.push(slLong);
+      var stripeLong = box(0.05, 1.92, 0.1, M.stripe, s * 0.91, 3.45, 0);
+      stripeLong.rotation.z = s * 0.032;          /* acompanha a abertura do cano (0,06 em 1,9) */
+      stripeLong.visible = false;
+      legIn.add(stripeLong);
+      longShortsParts.push(stripeLong);
 
       /* pernas */
       var hipP = [s * 0.42, 3.6, 0], ankle = [s * 0.46, 0.7, 0];
@@ -586,9 +602,10 @@
     skirtHem.position.y = 3.46;
     skirtHem.visible = false;
     character.add(skirtHem);
-    /* mode = 'masculino' (camiseta e shorts) | 'vestido' | 'saia' (camiseta e saia) */
+    /* mode = 'masculino' (camiseta e shorts) | 'bermuda' (camiseta e bermuda longa) | 'vestido' | 'saia' (camiseta e saia) */
     function setOutfit(mode) {
       shortsParts.forEach(function (m) { m.visible = (mode === 'masculino'); });
+      longShortsParts.forEach(function (m) { m.visible = (mode === 'bermuda'); });
       skirt.visible = (mode === 'vestido');
       miniSkirt.visible = skirtHem.visible = (mode === 'saia');
       result.outfit = mode;
@@ -775,7 +792,7 @@
   });
   btnBang.addEventListener('click', function () { active.setBang(!active.bang); syncHairUI(); updateCount(); });
   /* ---------- roupas (painel no canto direito) ----------
-     Masculino: camiseta e shorts (a roupa original) · Feminino: vestido (a camiseta vira o vestido e o shorts some)
+     Masculino: camiseta e shorts (a roupa original) ou camiseta e bermuda longa · Feminino: vestido (a camiseta vira o vestido e o shorts some)
      ou camiseta e saia (a saia ocupa o lugar do shorts e usa a cor dele) */
   var outfitBtns = Array.prototype.slice.call(document.querySelectorAll('[data-outfit]'));
   function syncOutfitUI() {
@@ -785,7 +802,7 @@
       var k = b.getAttribute('data-part');
       if (k === 'shorts') {
         b.hidden = (o === 'vestido');                                     /* no vestido não há shorts nem saia separada para pintar */
-        b.textContent = (o === 'saia') ? 'Saia' : 'Shorts';
+        b.textContent = (o === 'saia') ? 'Saia' : (o === 'bermuda') ? 'Bermuda' : 'Shorts';
       }
       if (k === 'shirt') b.textContent = (o === 'vestido') ? 'Vestido' : 'Camiseta';
     });
