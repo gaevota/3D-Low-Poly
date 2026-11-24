@@ -572,14 +572,16 @@
     skirt.visible = false;
     character.add(skirt);
     /* Saia (feminino, com camiseta): modelo próprio, diferente do vestido — mais curta (só até o meio da coxa)
-       e bem mais aberta, de 10 lados, com uma barra branca na bainha (como as listras do shorts).
-       Começa um pouco por baixo da barra da camiseta (y = 4,55, raio 0,92) e abre até y = 3,4 (raio 1,3). */
-    var miniSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 1.3, 1.15, 10, 1), shortsM);
+       e bem mais aberta, com uma barra branca na bainha (como as listras do shorts).
+       Tem os mesmos 8 lados da camiseta (alinhados com ela): com outro número de lados, os cantos da saia
+       furavam a camiseta e a barra dela ficava com dentes. Começa uns 0,05 por dentro da barra da camiseta
+       (y = 4,45, raio 0,97, menor que o da camiseta ali, 0,989) e abre até y = 3,4 (raio 1,3). */
+    var miniSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.97, 1.3, 1.05, 8, 1), shortsM);
     miniSkirt.scale.z = 0.6;
-    miniSkirt.position.y = 3.975;
+    miniSkirt.position.y = 3.925;
     miniSkirt.visible = false;
     character.add(miniSkirt);
-    var skirtHem = new THREE.Mesh(new THREE.CylinderGeometry(1.27, 1.31, 0.12, 10, 1, true), M.stripe);
+    var skirtHem = new THREE.Mesh(new THREE.CylinderGeometry(1.272, 1.31, 0.12, 8, 1, true), M.stripe);
     skirtHem.scale.z = 0.6;
     skirtHem.position.y = 3.46;
     skirtHem.visible = false;
