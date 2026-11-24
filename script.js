@@ -178,13 +178,15 @@
     }
 
     var SHELL_C = new THREE.Vector3(0, 0.08, -0.06);
-    var BANG_TIP_Y = 0.15;     /* altura da ponta da franja na esfera do cabelo (o "bico" original ficava em 0,526) */
+    var SHORT_CUT_Y = -0.3;    /* Cabelo 5: faceta da casca só fica se o centro dela estiver acima disso (normal: −0,72) */
+    var BANG_TIP_Y = 0.15;    /* altura da ponta da franja na esfera do cabelo (o "bico" original ficava em 0,526) */
     function noise3(x, y, z) {
       return Math.sin(x * 7.3 + y * 5.1 + z * 3.7) * 0.5 + Math.sin(x * 3.1 - y * 8.7 + z * 6.3) * 0.5;
     }
     /* casca: esfera de poucas faces, aberta embaixo e com uma janela para o rosto */
     /* longBang = true gera o "Cabelo 2" (franja comprida); false gera o "Cabelo 1" */
-    function buildShell(longBang, noSideTips) {
+    /* shortCut = true gera o "Cabelo 5" (curto): a borda de baixo sobe e o cabelo termina na altura das orelhas */
+    function buildShell(longBang, noSideTips, shortCut) {
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
     var sp = shellSrc.attributes.position;
@@ -193,7 +195,7 @@
       var cx = (sp.getX(fi) + sp.getX(fi + 1) + sp.getX(fi + 2)) / 3;
       var cy = (sp.getY(fi) + sp.getY(fi + 1) + sp.getY(fi + 2)) / 3;
       var cz = (sp.getZ(fi) + sp.getZ(fi + 1) + sp.getZ(fi + 2)) / 3;
-      var bottomOpen = cy < -0.72;
+      var bottomOpen = cy < (shortCut ? SHORT_CUT_Y : -0.72);
       var faceWindow = cz > 0.5 && cy > -0.8 && cy < 0.42 && Math.abs(cx) < 0.58;
       /* Cabelo 3: as duas facetas da frente de baixo (x ≈ ±0,55, z ≈ 0,27, na borda inferior) apareciam como dois triângulos escuros de cada lado do pescoço */
       var sideTip = noSideTips && Math.abs(cx) > 0.45 && cz > 0.15 && cz < 0.35 && cy < -0.6;
@@ -274,10 +276,10 @@
     longHair.visible = false;
     character.add(longHair);
 
-    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) · n = 4: Cabelo 4 (comprido com a franja do Cabelo 2) */
+    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) · n = 4: Cabelo 4 (comprido com a franja do Cabelo 2) · n = 5: Cabelo 5 (curto) */
     function setHair(n) {
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4);
+      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4, n === 5);
       longHair.visible = (n === 3 || n === 4);
       result.hair = n;
     }
@@ -682,7 +684,7 @@
 
   /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
   var hairPicker = document.getElementById('hairPicker');
-  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3'), document.getElementById('btnHair4')];
+  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3'), document.getElementById('btnHair4'), document.getElementById('btnHair5')];
   function syncHairUI() {
     hairPicker.hidden = (active !== characters[0]);
     btnHair.forEach(function (b, j) { b.setAttribute('aria-pressed', active.hair === j + 1 ? 'true' : 'false'); });
