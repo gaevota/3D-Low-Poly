@@ -40,8 +40,7 @@
     stripe: mat(0xe6e6ec),
     sock: mat(0xe4e4e8),
     shoeWhite: mat(0xe9e9e4),
-    shoeOut: mat(0x8d8d96),
-    tie: mat(0xd9739c)            /* elástico do Cabelo 6 */
+    shoeOut: mat(0x8d8d96)
   };
 
   function rng(seed) {
@@ -280,9 +279,9 @@
     /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) · n = 4: Cabelo 4 (comprido com a franja do Cabelo 2) · n = 5: Cabelo 5 (curto) · n = 6: Cabelo 6 (preso, rabo de cavalo longo) */
     function setHair(n) {
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4, n === 5 || n === 6);
+      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4, n === 5);
       longHair.visible = (n === 3 || n === 4);
-      ponytail.visible = ponyTie.visible = (n === 6);
+      ponytail.visible = (n === 6);
       result.hair = n;
     }
 
@@ -292,10 +291,10 @@
     character.add(head);
 
     /* ---------- Cabelo 6: cabelo preso (rabo de cavalo longo) ----------
-       A casca é a do cabelo curto (puxado para trás). Atrás da cabeça fica um elástico e, saindo dele,
-       um rabo de facetas que desce pelas costas. O grupo fica preso à cabeça (acompanha o lugar dela),
+       A casca é a do Cabelo 1 (mesmo tamanho). Atrás da cabeça sai um rabo de facetas
+       que desce pelas costas. O grupo fica preso à cabeça (acompanha o lugar dela),
        mas com a inclinação e a escala da cabeça desfeitas, para o rabo cair reto e com o mesmo tamanho
-       das outras peças. Coordenadas do rabo: origem no elástico, y para cima, o rabo desce em y negativo. */
+       das outras peças. Coordenadas do rabo: origem no ponto onde ele sai da cabeça, y para cima, o rabo desce em y negativo. */
     var PONY_RINGS = [          /* [y, raio, deslocamento em z] */
       [0.10, 0.20,  0.00],
       [-0.20, 0.36, -0.04],
@@ -329,7 +328,7 @@
       var topC = [0, PONY_RINGS[0][0] + 0.02, PONY_RINGS[0][2]];
       for (var sc = 0; sc < PONY_SEGS; sc++) {
         pt(last[sc], tip, last[(sc + 1) % PONY_SEGS]);                  /* ponta */
-        pt(rows[0][sc], rows[0][(sc + 1) % PONY_SEGS], topC);           /* tampa de cima (fica escondida sob o elástico) */
+        pt(rows[0][sc], rows[0][(sc + 1) % PONY_SEGS], topC);           /* tampa de cima (fica escondida dentro da casca do cabelo) */
       }
       var pg = new THREE.BufferGeometry();
       pg.setAttribute('position', new THREE.Float32BufferAttribute(pv, 3));
@@ -341,10 +340,8 @@
     ponyG.quaternion.copy(head.quaternion).invert();
     ponyG.scale.setScalar(1 / 0.92);
     var ponytail = new THREE.Mesh(buildPonytail(), hairM);
-    var ponyTie = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.24, 0.2, 7, 1), M.tie);
-    ponyTie.position.y = -0.1;
-    ponytail.visible = false; ponyTie.visible = false;
-    ponyG.add(ponytail); ponyG.add(ponyTie);
+    ponytail.visible = false;
+    ponyG.add(ponytail);
     head.add(ponyG);
 
     /* ---------- tronco (camiseta larga) ---------- */
