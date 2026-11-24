@@ -196,8 +196,9 @@
     /* casca: esfera de poucas faces, aberta embaixo e com uma janela para o rosto */
     /* longBang = true liga a franja comprida ("Colocar franja"); false é a franja normal */
     /* shortCut = true gera o "Cabelo 5" (curto): a borda de baixo sobe e o cabelo termina na altura das orelhas */
-    /* slimBack = true (cabelos femininos 1 e 2): a casca fica mais colada atrás da cabeça, como num cabelo puxado para trás;
-       só o z de trás é encolhido (até 8% em z ≤ −0,7), então frente e lados não mudam */
+    /* slimBack = fração (0 a 0,15) que o z de trás da casca encolhe (cabelos femininos 1 e 2): fica mais colada atrás da cabeça;
+       só o z de trás é encolhido (cheio a partir de z ≤ −0,7), então frente e lados não mudam */
+    var SLIM_F1 = 0.11, SLIM_F2 = 0.08;     /* quanto a casca encolhe atrás: feminino 1 (comprido) e feminino 2 (preso) */
     function buildShell(longBang, noSideTips, shortCut, slimBack) {
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
@@ -224,7 +225,7 @@
         var rr = 1 + noise3(vx, vy, vz) * 0.02;
         var fl = vy < 0 ? 1 + 0.14 * (-vy) : 1;
         var bk = slimBack ? Math.max(0, Math.min(1, -vz / 0.7)) : 0;
-        var bz = 1 - 0.08 * bk * bk * (3 - 2 * bk);
+        var bz = 1 - slimBack * bk * bk * (3 - 2 * bk);
         kept.push(vx * rr * fl * 1.12 + SHELL_C.x, vy * rr * 1.2 + SHELL_C.y, vz * rr * fl * 1.12 * bz + SHELL_C.z);
       }
     }
@@ -259,10 +260,10 @@
       [5.0, 0.56, 0.44, -0.10, 1.22]
     ];
     var LONG_SEGS = 8;                       /* facetas em volta, de um lado ao outro */
-    /* A casca do Cabelo 1 feminino ficou mais justa atrás (slimBack, até 0,08 em z), então o começo da cortina,
+    /* A casca do Cabelo 1 feminino ficou mais justa atrás (slimBack), então o começo da cortina,
        que nasce por dentro da casca, também recua o fundo (só atrás; lados e frente ficam iguais), senão
        ela furaria a casca. Vai diminuindo para baixo, onde a cortina já sai por baixo da cúpula. */
-    function LONG_TUCK(y) { return y >= 7.3 ? 0.05 : y >= 7.0 ? 0.035 : y >= 6.6 ? 0.02 : 0; }
+    function LONG_TUCK(y) { return y >= 7.3 ? 0.08 : y >= 7.0 ? 0.055 : y >= 6.6 ? 0.03 : 0; }
     function buildLongHair() {
       rnd = rng(11);
       var pts = [];
@@ -299,7 +300,7 @@
     function rebuildHair() {
       var n = result.hair;
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 || n === 6);
+      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 ? SLIM_F1 : n === 6 ? SLIM_F2 : 0);
       longHair.visible = (n === 3);
       ponytail.visible = (n === 6);
     }
