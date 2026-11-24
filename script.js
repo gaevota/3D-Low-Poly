@@ -261,8 +261,9 @@
       [5.0, 0.56, 0.44, -0.10, 1.22]
     ];
     var LONG_SEGS = 8;                       /* facetas em volta, de um lado ao outro */
-    /* LONG_TUCK(y): quanto recuar o fundo da cortina atrás, por altura. Está em 0 de propósito: a cortina fica onde sempre esteve. */
-    function LONG_TUCK(y) { return 0; }      /* cortina na posição original (sem recuo) */
+    /* LONG_TUCK(y): quanto recuar o fundo da cortina atrás, por altura (negativo = mais para fora, para trás).
+       −0,06 em todas as fileiras: a cortina fica um pouco mais afastada das costas e da cabeça; lados e frente não mudam. */
+    function LONG_TUCK(y) { return -0.06; }
     function buildLongHair() {
       rnd = rng(11);
       var pts = [];
