@@ -875,26 +875,15 @@
   function syncSpin() { btnSpin.setAttribute('aria-pressed', auto ? 'true' : 'false'); }
   syncSpin();
 
-  var press = null;                     /* clique com o botão esquerdo no jogo (para o interruptor) */
   canvas.addEventListener('pointerdown', function (e) {
-    if (playing) {
-      /* no jogo, só o botão direito gira a câmera; o esquerdo fica livre para clicar no interruptor */
-      if (e.button === 2) {
-        drag = { x: e.clientX, y: e.clientY };
-        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
-      } else if (e.button === 0) {
-        press = { x: e.clientX, y: e.clientY };
-      }
-      return;
-    }
-    drag = { x: e.clientX, y: e.clientY };
+    drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, btn: e.button };
     try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
-    if (auto) { auto = false; syncSpin(); }
+    if (auto && !playing) { auto = false; syncSpin(); }
   });
   canvas.addEventListener('pointermove', function (e) {
     if (!drag) return;
     if (playing) {
-      /* no jogo, arrastar com o botão direito gira a câmera em volta da personagem */
+      /* no jogo, arrastar gira a câmera em volta da personagem */
       camYaw -= (e.clientX - drag.x) * 0.008;
       camPitch = clamp(camPitch + (e.clientY - drag.y) * 0.005, pitchMin(), PITCH_MAX);
     } else {
@@ -903,14 +892,12 @@
     }
     drag.x = e.clientX; drag.y = e.clientY;
   });
-  function endDrag() { drag = null; press = null; }
+  function endDrag() { drag = null; }
   canvas.addEventListener('pointerup', function (e) {
-    /* um clique do botão esquerdo (quase sem mover) no interruptor da parede liga/desliga a luz */
-    if (playing && e.button === 0 && press && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 5) clickSwitch(e);
-    if (e.button === 2) drag = null;
-    press = null;
+    /* um clique do botão esquerdo (quase sem arrastar) no interruptor da parede liga/desliga a luz */
+    if (drag && playing && drag.btn === 0 && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 5) clickSwitch(e);
+    endDrag();
   });
-  canvas.addEventListener('contextmenu', function (e) { if (playing) e.preventDefault(); });
   /* cursor de "mão" ao passar o mouse no interruptor quando estiver perto dele */
   canvas.addEventListener('pointermove', function (e) {
     if (drag) return;
@@ -1090,7 +1077,7 @@
      Vista 1 = câmera em terceira pessoa de antes: orbita a personagem sempre olhando para ela
                (camPitch de ORBIT_MIN até PITCH_MAX); as setas andam como W A S D.
      Vista 2 = vista da sala: abaixo de ORBIT_MIN a câmera fica baixa e só inclina o olhar para
-               cima (até PITCH_MIN), para ver as paredes, o teto e a lâmpada; as setas giram a câmera. */
+               cima (até PITCH_MIN),para ver as paredes, o teto e a lâmpada. *
   var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.05;
   var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4;     /* inclinação ao trocar de vista */
   var camView = 1;
@@ -1104,10 +1091,10 @@
   var menu = document.getElementById('menuJogo');
   var btnPlay = document.getElementById('btnPlay');
   var VIEW_LABEL = canvas.getAttribute('aria-label');
-  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D para andar com a personagem, Shift para correr, Espaço para pular. Arraste com o botão direito do mouse para girar a câmera. As teclas 1 e 2 trocam a vista; na vista 2, as setas e o mouse olham para cima, até o teto.';
+  var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D (ou as setas) para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse para girar a câmera. As teclas 1 e 2 trocam a vista; na vista 2, o mouse olha para cima, até o teto.';
 
-  var HINT_V1 = 'W A S D para andar · Shift para correr · Espaço para pular · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
-  var HINT_V2 = 'W A S D para andar · Shift para correr · Espaço para pular · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
+  var HINT_V1 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
+  var HINT_V2 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
   function setView(n) {
     camView = n;
     camPitch = n === 2 ? VIEW2_PITCH : VIEW1_PITCH;
@@ -1286,17 +1273,9 @@
       pl.y += pl.vy * dt;
       if (pl.y <= 0) { pl.y = 0; pl.vy = 0; }
     }
-    var cam2 = camView === 2;
-    if (cam2) {
-      /* vista 2: setas giram a câmera (esquerda/direita em volta, cima/baixo olham para cima/baixo) */
-      var ky = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
-      var kp = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
-      camYaw -= ky * 1.9 * dt;
-      camPitch = clamp(camPitch + kp * 1.4 * dt, PITCH_MIN, PITCH_MAX);
-    }
-    /* vista 1: as setas andam como W A S D */
-    var f = ((keys.KeyW || (!cam2 && keys.ArrowUp)) ? 1 : 0) - ((keys.KeyS || (!cam2 && keys.ArrowDown)) ? 1 : 0);
-    var r = ((keys.KeyD || (!cam2 && keys.ArrowRight)) ? 1 : 0) - ((keys.KeyA || (!cam2 && keys.ArrowLeft)) ? 1 : 0);
+    /* W A S D e as setas andam, nas duas vistas; a câmera gira arrastando com o mouse */
+    var f = ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
+    var r = ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
     sprint = !!(keys.ShiftLeft || keys.ShiftRight);
     var sy = Math.sin(camYaw), cy = Math.cos(camYaw);
     var dx = -sy * f + cy * r;
