@@ -198,7 +198,7 @@
     /* shortCut = true gera o "Cabelo 5" (curto): a borda de baixo sobe e o cabelo termina na altura das orelhas */
     /* slimBack = fração (0 a 0,15) que o z de trás da casca encolhe (cabelos femininos 1 e 2): fica mais colada atrás da cabeça;
        só o z de trás é encolhido (cheio a partir de z ≤ −0,7), então frente e lados não mudam */
-    var SLIM_F1 = 0.03, SLIM_F2 = 0.08;     /* (feminino 1 era 0,11: menor = casca de trás maior) quanto a casca encolhe atrás: feminino 1 (comprido) e feminino 2 (preso) */
+    var SLIM_F1 = 0, SLIM_F2 = 0.08;     /* (feminino 1 era 0,11: menor = casca de trás maior) quanto a casca encolhe atrás: feminino 1 (comprido) e feminino 2 (preso) */
     function buildShell(longBang, noSideTips, shortCut, slimBack) {
     slimBack = slimBack || 0;      /* sem o argumento (cabelo 1 masculino na primeira montagem) = sem encolher; undefined dava NaN e o cabelo sumia */
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
