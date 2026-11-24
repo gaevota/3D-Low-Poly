@@ -246,17 +246,15 @@
        e o arco em volta, em radianos a partir de bem atrás (1,55 ≈ ±89°: no topo a cortina abraça os lados e tampa o
        vão escuro sob a cúpula; mais abaixo o arco fecha até 1,22 ≈ ±70°, só costas). O arco muda pouco de uma
        fileira para a outra, para a borda que aparece ao lado do pescoço ficar reta e sem degraus.
-       Começa por dentro da casca do cabelo e só sai por baixo dela, a partir de y ≈ 7,3, rente à borda, sem degrau.
-       A casca do feminino 1 é encolhida atrás (SLIM_F1), então ela fica em z ≈ −0,89 (no mundo) em y 7,6–7,9 e em
-       raio ≈ 0,78 na borda (y 7,3): as 3 primeiras fileiras ficam por dentro disso (fundo em −0,72 a −0,79).
-       Se mudar SLIM_F1 ou LONG_TUCK, reajuste essas fileiras: a cortina tem de continuar escondida sob a casca até y ≈ 7,3.
-       Depois a largura e o fundo vão diminuindo devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5). */
+       Começa por dentro da cúpula do cabelo (fundo em −0,90 a −0,93, a cúpula está em −1,0) e só sai
+       por baixo dela, a partir de y ≈ 7,3, quase na tangente, sem degrau. Depois a largura e o fundo
+       vão diminuindo devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5). */
     var LONG_RINGS = [
-      [7.9, 0.84, 0.68, -0.05, 1.55],
-      [7.6, 0.83, 0.67, -0.05, 1.55],
-      [7.3, 0.77, 0.60, -0.06, 1.55],
-      [7.0, 0.80, 0.62, -0.07, 1.50],
-      [6.6, 0.82, 0.68, -0.08, 1.42],
+      [7.9, 0.88, 0.85, -0.05, 1.55],
+      [7.6, 0.88, 0.85, -0.08, 1.55],
+      [7.3, 0.86, 0.82, -0.08, 1.55],
+      [7.0, 0.84, 0.78, -0.07, 1.50],
+      [6.6, 0.82, 0.72, -0.08, 1.42],
       [6.2, 0.76, 0.64, -0.10, 1.32],
       [5.8, 0.70, 0.56, -0.11, 1.25],
       [5.4, 0.64, 0.50, -0.10, 1.22],
