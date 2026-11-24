@@ -462,9 +462,13 @@
       legIn.add(limb([s * 0.46, 1.25, 0], [s * 0.46, 1.55, 0], 0.29, 0.3, M.sock, 8));
 
       /* tênis */
+      /* shoePivot fica no tornozelo (y = 0,7): o tênis gira em torno dele para a boca do tênis continuar encaixada na meia */
+      var shoePivot = new THREE.Group();
+      shoePivot.position.set(s * 0.46, 0.7, 0);
       var shoe = new THREE.Group();
-      shoe.position.set(s * 0.46, 0, 0);
+      shoe.position.set(0, -0.7, 0);
       shoe.rotation.y = s * 0.12;
+      shoePivot.add(shoe);
       /* sola: contorno angular (x, z) extrudado para cima; camada cinza embaixo + entressola branca */
       var SOLE = [[-0.18,-0.38],[0.18,-0.38],[0.31,-0.28],[0.34,0.10],[0.33,0.60],[0.30,0.95],[0.22,1.20],[0.08,1.30],
                   [-0.08,1.30],[-0.22,1.20],[-0.30,0.95],[-0.33,0.60],[-0.34,0.10],[-0.31,-0.28]];
@@ -588,8 +592,8 @@
         lace.rotation.x = Math.atan2(a - b, 0.08);
         shoe.add(lace);
       });
-      legEntry.shoe = shoe;
-      legIn.add(shoe);
+      legEntry.shoe = shoePivot;
+      legIn.add(shoePivot);
     });
 
     /* ---------- roupas: masculino (camiseta e shorts) · feminino (vestido ou camiseta e saia) ----------
@@ -1319,17 +1323,17 @@
   }
 
   /* Altura que o corpo precisa subir para o ponto mais baixo da sola (calcanhar ou ponta, dos dois pés) ficar no chão.
-     Cada ponto passa pelas mesmas rotações do modelo: tênis (em torno do tornozelo, no chão), perna (em torno do quadril,
+     Cada ponto passa pelas mesmas rotações do modelo: tênis (em torno do tornozelo), perna (em torno do quadril,
      y = 4) e inclinação do corpo ao correr (em torno dos pés). Antes só se descontava o encurtamento da perna,
      e a ponta do tênis afundava no chão ao andar e, mais ainda, ao correr. */
-  var HIP_Y = 4.0, SOLE_Z = [-0.38, 1.3], FOOT_PITCH = 0.8;
+  var HIP_Y = 4.0, ANKLE_Y = 0.7, SOLE_Z = [-0.38, 1.3], FOOT_PITCH = 0.5;
   function footLift(a, lean) {
     var minY = 0, cl = Math.cos(lean), sl = Math.sin(lean);
     a.legs.forEach(function (l) {
       var th = l.g.rotation.x, ph = l.shoe ? l.shoe.rotation.x : 0;
       var ct = Math.cos(th), st = Math.sin(th), cp = Math.cos(ph), sp = Math.sin(ph);
       SOLE_Z.forEach(function (z) {
-        var Y = -z * sp - HIP_Y, Z = z * cp;                     /* depois do giro do tênis, em relação ao quadril */
+        var Y = ANKLE_Y - ANKLE_Y * cp - z * sp - HIP_Y, Z = -ANKLE_Y * sp + z * cp;   /* depois do giro do tênis (em torno do tornozelo), em relação ao quadril */
         var y2 = HIP_Y + Y * ct - Z * st, z2 = Y * st + Z * ct;  /* depois do giro da perna */
         var y3 = y2 * cl - z2 * sl;                              /* depois da inclinação do corpo */
         if (y3 < minY) minY = y3;
@@ -1373,7 +1377,7 @@
     var sw = Math.sin(walkPh) * walkK;
     a.legs.forEach(function (l) {
       l.g.rotation.x = l.s * sw * la;
-      if (l.shoe) l.shoe.rotation.x = -FOOT_PITCH * l.g.rotation.x;   /* o pé gira contra a perna, para a sola ficar quase plana */
+      if (l.shoe) l.shoe.rotation.x = -FOOT_PITCH * l.g.rotation.x;   /* o pé gira contra a perna, em torno do tornozelo, para a sola ficar mais plana */
     });
     a.armLG.rotation.x = sw * aa;
     a.armRG.rotation.x = waveT0 >= 0 ? 0 : -sw * aa;
