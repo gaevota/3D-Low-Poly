@@ -565,15 +565,16 @@
       longShortsParts.push(stripeLong);
 
       /* pernas */
-      var hipP = [s * 0.42, 3.6, 0], ankle = [s * 0.46, 0.7, 0];
+      /* a perna termina na boca do tênis (y = 0,78): nada de perna dentro do tênis */
+      var hipP = [s * 0.42, 3.6, 0], ankle = [s * 0.46, 0.78, 0];
       legIn.add(limb(hipP, ankle, 0.26, 0.14, skinM, 8));
 
       /* meia larga com a boca dobrada */
-      /* a meia é dividida bem dentro do tênis (entre y = 0,55 e 0,65, abaixo da boca do tênis, que fica em y = 0,78,
-         então a emenda não aparece): a parte de cima fica na perna e a parte de baixo é colocada no próprio tênis
-         para girar junto com ele. Antes ela ficava parada e, no fim do passo da corrida, a ponta branca da meia
-         furava o cabedal e aparecia como um pontinho. */
-      legIn.add(limb([s * 0.46, 0.55, 0], [s * 0.46, 1.4, 0], 0.2394, 0.25, M.sock, 8));
+      /* a meia não vai mais até o fundo do tênis: ela só desce uns 0,1 abaixo da boca (y = 0,78) e para em y = 0,68.
+         Esse pouquinho é de propósito: o tênis gira em torno do tornozelo (y = 0,7) quando a perna anda, e a borda da
+         boca sobe e desce até uns 0,08; sem ele, aparecia uma fresta entre a meia e a borda. Não existe mais a meia
+         separada dentro do tênis (aquela que girava junto com ele). */
+      legIn.add(limb([s * 0.46, 0.68, 0], [s * 0.46, 1.4, 0], 0.241, 0.25, M.sock, 8));
       legIn.add(limb([s * 0.46, 1.25, 0], [s * 0.46, 1.55, 0], 0.29, 0.3, M.sock, 8));
 
       /* tênis */
@@ -584,7 +585,6 @@
       shoe.position.set(0, -0.7, 0);
       shoe.rotation.y = s * 0.12;
       shoePivot.add(shoe);
-      shoe.add(limb([0, 0.2, 0], [0, 0.65, 0], 0.235, 0.2406, M.sock, 8));   /* parte da meia dentro do tênis (termina abaixo da borda, y = 0,78) */
       /* sola: contorno angular (x, z) extrudado para cima; camada cinza embaixo + entressola branca */
       var SOLE = [[-0.18,-0.38],[0.18,-0.38],[0.31,-0.28],[0.34,0.10],[0.33,0.60],[0.30,0.95],[0.22,1.20],[0.08,1.30],
                   [-0.08,1.30],[-0.22,1.20],[-0.30,0.95],[-0.33,0.60],[-0.34,0.10],[-0.31,-0.28]];
