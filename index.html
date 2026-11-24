@@ -24,14 +24,21 @@
   <div class="tabs-bar" id="tabsBar">
     <span class="tabs-title" id="personagens-label">Personagens</span>
     <div class="tabs" id="personagens" role="tablist" aria-labelledby="personagens-label"></div>
-    <div class="hair" id="hairPicker" role="group" aria-labelledby="hair-label" hidden>
-      <span class="tabs-title" id="hair-label">Cabelo</span>
-      <button type="button" id="btnHair1" aria-pressed="true">Cabelo 1</button>
-      <button type="button" id="btnHair2" aria-pressed="false">Cabelo 2</button>
-      <button type="button" id="btnHair3" aria-pressed="false">Cabelo 3</button>
-      <button type="button" id="btnHair4" aria-pressed="false">Cabelo 4</button>
-      <button type="button" id="btnHair5" aria-pressed="false">Cabelo 5</button>
-      <button type="button" id="btnHair6" aria-pressed="false">Cabelo 6</button>
+    <div class="hair" id="hairPicker" hidden>
+      <div class="hair" role="group" aria-labelledby="hair-m-label">
+        <span class="tabs-title" id="hair-m-label">Cabelo masculino</span>
+        <button type="button" data-hair="1" aria-pressed="true">Cabelo 1</button>
+        <button type="button" data-hair="5" aria-pressed="false">Cabelo 5</button>
+      </div>
+      <div class="hair" role="group" aria-labelledby="hair-f-label">
+        <span class="tabs-title" id="hair-f-label">Cabelo feminino</span>
+        <button type="button" data-hair="3" aria-pressed="false">Cabelo 3</button>
+        <button type="button" data-hair="6" aria-pressed="false">Cabelo 6</button>
+      </div>
+      <div class="hair" role="group" aria-labelledby="hair-bang-label">
+        <span class="tabs-title" id="hair-bang-label">Franja</span>
+        <button type="button" id="btnBang" aria-pressed="false">Colocar franja</button>
+      </div>
     </div>
     <div class="fem" role="group" aria-labelledby="fem-label">
       <span class="tabs-title" id="fem-label">Feminino</span>

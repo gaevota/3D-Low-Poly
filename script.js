@@ -276,14 +276,17 @@
     longHair.visible = false;
     character.add(longHair);
 
-    /* n = 1: Cabelo 1 · n = 2: Cabelo 2 (franja comprida) · n = 3: Cabelo 3 (comprido) · n = 4: Cabelo 4 (comprido com a franja do Cabelo 2) · n = 5: Cabelo 5 (curto) · n = 6: Cabelo 6 (preso, rabo de cavalo longo) */
-    function setHair(n) {
+    /* Estilo (result.hair) e franja (result.bang) são independentes: qualquer estilo aceita a franja comprida.
+       Masculino: 1 (padrão) e 5 (curto) · Feminino: 3 (comprido) e 6 (preso, rabo de cavalo longo, com a mesma casca do 3) */
+    function rebuildHair() {
+      var n = result.hair;
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(n === 2 || n === 4, n === 3 || n === 4, n === 5);
-      longHair.visible = (n === 3 || n === 4);
+      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5);
+      longHair.visible = (n === 3);
       ponytail.visible = (n === 6);
-      result.hair = n;
     }
+    function setHair(n) { result.hair = n; rebuildHair(); }
+    function setBang(on) { result.bang = !!on; rebuildHair(); }
 
     head.position.set(0, HEAD_Y, 0.05);
     head.rotation.set(0.2, 0.1, -0.06);
@@ -580,7 +583,7 @@
                      skin: { main: [skinM, skinSmoothM], dark: [skinShadeM], k: 0.87, hex: null },   /* as orelhas usam o tom escuro */
                      hair: { main: [hairM], dark: [], hex: null }
                    },
-                   hair: variant === 1 ? 2 : 1, setHair: setHair, dress: false, setDress: setDress };
+                   hair: 1, bang: variant === 1, setHair: setHair, setBang: setBang, dress: false, setDress: setDress };
     Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
     return result;
   }
@@ -737,16 +740,21 @@
   buildSwatches();
   colorCustom.addEventListener('input', function () { applyColor(colorCustom.value); });
 
-  /* ---------- cabelo: só o Personagem 1 tem a opção (Cabelo 1 = atual, Cabelo 2 = o do Personagem 2) ---------- */
+  /* ---------- cabelo: só o Personagem 1 tem a opção ----------
+     Masculino: Cabelo 1 e 5 · Feminino: Cabelo 3 e 6 · "Colocar franja" liga a franja comprida em qualquer um (data-hair = número do cabelo) */
   var hairPicker = document.getElementById('hairPicker');
-  var btnHair = [document.getElementById('btnHair1'), document.getElementById('btnHair2'), document.getElementById('btnHair3'), document.getElementById('btnHair4'), document.getElementById('btnHair5'), document.getElementById('btnHair6')];
+  var btnHair = Array.prototype.slice.call(hairPicker.querySelectorAll('[data-hair]'));
+  var btnBang = document.getElementById('btnBang');
   function syncHairUI() {
     hairPicker.hidden = (active !== characters[0]);
-    btnHair.forEach(function (b, j) { b.setAttribute('aria-pressed', active.hair === j + 1 ? 'true' : 'false'); });
+    btnHair.forEach(function (b) { b.setAttribute('aria-pressed', active.hair === Number(b.getAttribute('data-hair')) ? 'true' : 'false'); });
+    btnBang.setAttribute('aria-pressed', active.bang ? 'true' : 'false');
+    btnBang.textContent = active.bang ? 'Tirar franja' : 'Colocar franja';
   }
-  btnHair.forEach(function (b, j) {
-    b.addEventListener('click', function () { active.setHair(j + 1); syncHairUI(); updateCount(); });
+  btnHair.forEach(function (b) {
+    b.addEventListener('click', function () { active.setHair(Number(b.getAttribute('data-hair'))); syncHairUI(); updateCount(); });
   });
+  btnBang.addEventListener('click', function () { active.setBang(!active.bang); syncHairUI(); updateCount(); });
   /* ---------- feminino: vestido (a camiseta vira o vestido e o shorts some) ---------- */
   var btnDress = document.getElementById('btnDress');
   function syncDressUI() {
