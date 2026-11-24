@@ -200,6 +200,7 @@
        só o z de trás é encolhido (cheio a partir de z ≤ −0,7), então frente e lados não mudam */
     var SLIM_F1 = 0.11, SLIM_F2 = 0.08;     /* quanto a casca encolhe atrás: feminino 1 (comprido) e feminino 2 (preso) */
     function buildShell(longBang, noSideTips, shortCut, slimBack) {
+    slimBack = slimBack || 0;      /* sem o argumento (cabelo 1 masculino na primeira montagem) = sem encolher; undefined dava NaN e o cabelo sumia */
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
     var sp = shellSrc.attributes.position;
@@ -260,10 +261,8 @@
       [5.0, 0.56, 0.44, -0.10, 1.22]
     ];
     var LONG_SEGS = 8;                       /* facetas em volta, de um lado ao outro */
-    /* A casca do Cabelo 1 feminino ficou mais justa atrás (slimBack), então o começo da cortina,
-       que nasce por dentro da casca, também recua o fundo (só atrás; lados e frente ficam iguais), senão
-       ela furaria a casca. Vai diminuindo para baixo, onde a cortina já sai por baixo da cúpula. */
-    function LONG_TUCK(y) { return y >= 7.3 ? 0.08 : y >= 7.0 ? 0.055 : y >= 6.6 ? 0.03 : 0; }
+    /* LONG_TUCK(y): quanto recuar o fundo da cortina atrás, por altura. Está em 0 de propósito: a cortina fica onde sempre esteve. */
+    function LONG_TUCK(y) { return 0; }      /* cortina na posição original (sem recuo) */
     function buildLongHair() {
       rnd = rng(11);
       var pts = [];
