@@ -391,11 +391,13 @@
     head.add(hairMesh);
 
     /* Estilo (result.hair) e franja (result.bang) são independentes: qualquer estilo aceita a franja comprida.
-       Masculino: 1 (padrão) e 5 (curto) · Feminino: 3 (comprido, com a cortina de mechas como parte da própria casca: hang) e 6 (preso, rabo de cavalo longo); os dois femininos têm a casca mais justa atrás */
+       Masculino: 1 (padrão) e 5 (curto) · Feminino: 3 (comprido, com a cortina de mechas como parte da própria casca: hang), 6 (preso, rabo de cavalo longo)
+       e 7 (curto: a mesma casca do 3, com a mesma folga atrás, só que sem a cortina); os femininos têm a casca mais justa atrás */
     function rebuildHair() {
       var n = result.hair;
+      var fem = (n === 3 || n === 6 || n === 7);
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 ? SLIM_F1 : n === 6 ? SLIM_F2 : 0, n === 3);
+      hairMesh.geometry = buildShell(result.bang, fem, n === 5, (n === 3 || n === 7) ? SLIM_F1 : n === 6 ? SLIM_F2 : 0, n === 3);
       ponytail.visible = (n === 6);
     }
     function setHair(n) { result.hair = n; rebuildHair(); }
@@ -917,7 +919,7 @@
   colorCustom.addEventListener('input', function () { applyColor(colorCustom.value); });
 
   /* ---------- cabelo: só o Personagem 1 tem a opção ----------
-     Masculino: Cabelo 1 e 2 (data-hair 1 e 5) · Feminino: Cabelo 1 e 2 (data-hair 3 e 6) · "Colocar franja" liga a franja comprida em qualquer um (data-hair = número do cabelo) */
+     Masculino: Cabelo 1 e 2 (data-hair 1 e 5) · Feminino: Cabelo 1, 2 e 3 (data-hair 3, 6 e 7) · "Colocar franja" liga a franja comprida em qualquer um (data-hair = número do cabelo) */
   var hairPicker = document.getElementById('hairPicker');
   var btnHair = Array.prototype.slice.call(hairPicker.querySelectorAll('[data-hair]'));
   var btnBang = document.getElementById('btnBang');
