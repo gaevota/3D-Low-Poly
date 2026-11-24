@@ -212,6 +212,10 @@
       [5.50, 0.74, 1.0, 0.90, 0.74],     /* largura e fundo diminuem devagar até as costas (a camiseta tem o fundo em −0,3 a −0,5) */
       [5.00, 0.65, 1.0, 0.90, 0.70]      /* última fileira: pontas em dente (uma mecha mais baixa, a vizinha mais alta) */
     ];
+    /* colunas cortadas em cada ponta lateral da cortina (cada coluna tem uns 10°). As duas últimas de cada lado ficavam quase de lado
+       e, vistas de costas, formavam tirinhas e quinas no contorno, junto do ombro. Use número par: assim o desenho em dente da
+       última fileira continua simétrico. 0 = cortina inteira, como antes. */
+    var HANG_TRIM = 2;
     /* ---------- a cortina não pode entrar no corpo ----------
        Os pontos das fileiras são calculados num arco circular, mas o tronco é achatado (z × 0,6) e tem 8 lados: nas laterais,
        a cortina passava por dentro dele e das mangas. Depois de calcular cada ponto, o z é empurrado para trás da superfície de
@@ -302,7 +306,7 @@
       var out = [];
       function put(p) { var q = p.clone().applyMatrix4(inv); out.push(q.x, q.y, q.z); }
       for (r = 0; r < rows.length - 1; r++) {
-        for (i = 0; i < n - 1; i++) {
+        for (i = HANG_TRIM; i < n - 1 - HANG_TRIM; i++) {        /* sem as colunas das pontas (HANG_TRIM de cada lado) */
           var a = rows[r][i], b = rows[r][i + 1], c = rows[r + 1][i], d = rows[r + 1][i + 1];
           put(a); put(c); put(b);
           put(b); put(c); put(d);
