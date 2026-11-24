@@ -1245,6 +1245,10 @@
     walkK += ((gaitOn ? 1 : 0) - walkK) * Math.min(1, dt * 6);
     runK += ((runOn ? 1 : 0) - runK) * Math.min(1, dt * 6);
     var la = 0.35 + 0.25 * runK, aa = 0.4 + 0.4 * runK;
+    /* Vestido: a saia comprida é parada e as pernas giram em torno do quadril (y = 4,0), 0,9 acima da barra (y = 3,1).
+       Com o passo aberto, a coxa saía pela lateral da saia. Passo máximo de 0,28 rad (cerca de 16°): nessa conta a coxa
+       fica a ~0,53 do centro e a saia tem ~0,57 de folga naquela altura. Vale também para correr. */
+    if (a.outfit === 'vestido') la = Math.min(la, 0.28);
     if (walkK > 0.001) walkPh += dt * (6.5 + 5 * runK);
     var sw = Math.sin(walkPh) * walkK;
     a.legs.forEach(function (l) { l.g.rotation.x = l.s * sw * la; });
