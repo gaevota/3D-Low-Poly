@@ -36,7 +36,6 @@
     eye: mat(0x151a17),
     pupil: mat(0x151a17),
     hi: mat(0xffffff, { emissive: 0xffffff }),
-    lid: mat(0x3e343e),
     stripe: mat(0xe6e6ec),
     sock: mat(0xe4e4e8),
     shoeWhite: mat(0xe9e9e4),
@@ -91,7 +90,10 @@
     var shortsM = mat(0xffffff), shoeM = mat(0xffffff, { side: DS });   /* shoeM = cabedal do tênis */
     /* pele (cabeça lisa, corpo facetado e orelhas um pouco mais escuras) e cabelo: a cor vem do material,
        as facetas do cabelo só guardam claro/escuro */
-    var skinM = mat(0xffffff), skinSmoothM = mat(0xffffff, { flatShading: false }), skinShadeM = mat(0xffffff);
+    /* orelhas: mesmo acabamento liso da cabeça (sem facetas), só com o tom um pouco mais escuro */
+    var skinM = mat(0xffffff), skinSmoothM = mat(0xffffff, { flatShading: false }), skinShadeM = mat(0xffffff, { flatShading: false });
+    /* sobrancelhas: cada personagem tem a sua e a cor acompanha a do cabelo (um pouco mais escura) */
+    var browM = mat(0xffffff);
     var hairM = mat(0xffffff, { vertexColors: true, side: DS });
     var character = new THREE.Group();    /* pés em y = 0, depois deslocado para centralizar */
     character.position.set(-0.05, -4.6, 0);
@@ -133,7 +135,7 @@
       var hi = ico(0.035, 0, M.hi, 1, 1, 0.5);
       hi.position.set(p.x + 0.05, p.y + 0.07, p.z + 0.1);
       head.add(hi);
-      var lid = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.05), M.lid);
+      var lid = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.05), browM);
       lid.position.set(p.x, p.y + 0.28, p.z - 0.005);
       lid.rotation.z = -s * 0.04;
       lid.rotation.y = s * 0.35;
@@ -142,7 +144,7 @@
     });
     /* orelhas */
     [-1, 1].forEach(function (s) {
-      var ear = ico(0.17, 0, skinShadeM, 0.5, 1, 0.8);
+      var ear = ico(0.17, 2, skinShadeM, 0.5, 1, 0.8);       /* detalhe 2 (como a cabeça) + sombreamento suave = orelha lisa */
       ear.position.set(s * 0.93, -0.12, -0.02);
       head.add(ear);
     });
@@ -633,7 +635,7 @@
                      shorts: { main: [shortsM], dark: [], hex: null },
                      shoes: { main: [shoeM], dark: [], hex: null },
                      skin: { main: [skinM, skinSmoothM], dark: [skinShadeM], k: 0.87, hex: null },   /* as orelhas usam o tom escuro */
-                     hair: { main: [hairM], dark: [], hex: null }
+                     hair: { main: [hairM], dark: [browM], k: 0.75, hex: null }          /* as sobrancelhas usam o tom do cabelo, mais escuro */
                    },
                    hair: 1, bang: variant === 1, setHair: setHair, setBang: setBang, outfit: 'masculino', setOutfit: setOutfit, longSleeve: false, setLongSleeve: setLongSleeve };
     Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
