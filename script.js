@@ -876,6 +876,7 @@
   syncSpin();
 
   canvas.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0) return;             /* só o botão esquerdo gira a câmera; o direito é ignorado */
     drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, btn: e.button };
     try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     if (auto && !playing) { auto = false; syncSpin(); }
@@ -904,6 +905,9 @@
     canvas.style.cursor = (playing && nearSwitch() && overSwitch(e)) ? 'pointer' : '';
   });
   canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('lostpointercapture', endDrag);
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); endDrag(); });
+  window.addEventListener('blur', endDrag);
   canvas.addEventListener('wheel', function (e) {
     e.preventDefault();
     zoom = clamp(zoom * Math.exp(e.deltaY * 0.001), 0.4, 1.7);
