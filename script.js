@@ -380,7 +380,13 @@
     var armRG = new THREE.Group(); armRG.position.set(S[0], S[1], S[2]); character.add(armRG);
     var armIn = new THREE.Group(); armIn.position.set(-S[0], -S[1], -S[2]); armRG.add(armIn);
     armIn.add(limb(lerp3(S, H1, 0.07), lerp3(S, H1, 1.11), 0.19, 0.077, skinM, 7));
-    armIn.add(limb([0.69, 6.7, 0.0], lerp3(S, E, 0.8), 0.26, 0.38, shirtM, 7));
+    var sleeveShortR = limb([0.69, 6.7, 0.0], lerp3(S, E, 0.8), 0.26, 0.38, shirtM, 7);
+    armIn.add(sleeveShortR);
+    /* manga longa (opção "Manga longa", vale para qualquer roupa): vai do ombro até o pulso (a 93% do caminho
+       ombro → mão, y ≈ 4,56) e fecha em punho (raio 0,22, maior que o do braço ali, ~0,10). Fica no grupo do braço, então acena e balança junto */
+    var sleeveLongR = limb([0.69, 6.7, 0.0], lerp3(S, H1, 0.93), 0.26, 0.22, shirtM, 7);
+    sleeveLongR.visible = false;
+    armIn.add(sleeveLongR);
     var hand1 = makeHand(1);
     hand1.position.set(H1[0] + 0.03, H1[1] + 0.03, H1[2]);   /* bem de leve para fora, longe do corpo */
     hand1.scale.setScalar(0.95);
@@ -396,7 +402,11 @@
     var armLG = new THREE.Group(); armLG.position.set(S2[0], S2[1], S2[2]); character.add(armLG);
     var armLIn = new THREE.Group(); armLIn.position.set(-S2[0], -S2[1], -S2[2]); armLG.add(armLIn);
     armLIn.add(limb(lerp3(S2, H2, 0.07), lerp3(S2, H2, 1.11), 0.19, 0.077, skinM, 7));
-    armLIn.add(limb([-0.69, 6.7, 0.0], lerp3(S2, E2, 0.8), 0.26, 0.38, shirtM, 7));
+    var sleeveShortL = limb([-0.69, 6.7, 0.0], lerp3(S2, E2, 0.8), 0.26, 0.38, shirtM, 7);
+    armLIn.add(sleeveShortL);
+    var sleeveLongL = limb([-0.69, 6.7, 0.0], lerp3(S2, H2, 0.93), 0.26, 0.22, shirtM, 7);   /* mesma manga longa, do lado esquerdo */
+    sleeveLongL.visible = false;
+    armLIn.add(sleeveLongL);
     var hand2 = makeHand(-1);
     hand2.position.set(H2[0] - 0.03, H2[1] + 0.03, H2[2]);
     hand2.scale.setScalar(0.95);
@@ -602,6 +612,12 @@
     skirtHem.position.y = 3.46;
     skirtHem.visible = false;
     character.add(skirtHem);
+    /* manga longa: independente da roupa de baixo (masculino, feminino ou vestido); troca a manga curta pela longa */
+    function setLongSleeve(on) {
+      sleeveShortR.visible = sleeveShortL.visible = !on;
+      sleeveLongR.visible = sleeveLongL.visible = !!on;
+      result.longSleeve = !!on;
+    }
     /* mode = 'masculino' (camiseta e shorts) | 'bermuda' (camiseta e bermuda longa) | 'vestido' | 'saia' (camiseta e saia) */
     function setOutfit(mode) {
       shortsParts.forEach(function (m) { m.visible = (mode === 'masculino'); });
@@ -619,7 +635,7 @@
                      skin: { main: [skinM, skinSmoothM], dark: [skinShadeM], k: 0.87, hex: null },   /* as orelhas usam o tom escuro */
                      hair: { main: [hairM], dark: [], hex: null }
                    },
-                   hair: 1, bang: variant === 1, setHair: setHair, setBang: setBang, outfit: 'masculino', setOutfit: setOutfit };
+                   hair: 1, bang: variant === 1, setHair: setHair, setBang: setBang, outfit: 'masculino', setOutfit: setOutfit, longSleeve: false, setLongSleeve: setLongSleeve };
     Object.keys(PART_DEFAULT).forEach(function (k) { setPartColor(result, k, PART_DEFAULT[k]); });
     return result;
   }
@@ -795,16 +811,19 @@
      Masculino: camiseta e shorts (a roupa original) ou camiseta e bermuda longa · Feminino: vestido (a camiseta vira o vestido e o shorts some)
      ou camiseta e saia (a saia ocupa o lugar do shorts e usa a cor dele) */
   var outfitBtns = Array.prototype.slice.call(document.querySelectorAll('[data-outfit]'));
+  var btnSleeve = document.getElementById('btnSleeve');     /* manga longa: vale para qualquer roupa */
   function syncOutfitUI() {
     var o = active.outfit;
     outfitBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-outfit') === o ? 'true' : 'false'); });
+    btnSleeve.setAttribute('aria-pressed', active.longSleeve ? 'true' : 'false');
+    btnSleeve.textContent = active.longSleeve ? 'Manga curta' : 'Manga longa';
     partBtns.forEach(function (b) {
       var k = b.getAttribute('data-part');
       if (k === 'shorts') {
         b.hidden = (o === 'vestido');                                     /* no vestido não há shorts nem saia separada para pintar */
         b.textContent = (o === 'saia') ? 'Saia' : (o === 'bermuda') ? 'Bermuda' : 'Shorts';
       }
-      if (k === 'shirt') b.textContent = (o === 'vestido') ? 'Vestido' : 'Camiseta';
+      if (k === 'shirt') b.textContent = (o === 'vestido') ? 'Vestido' : active.longSleeve ? 'Camisa' : 'Camiseta';
     });
     if (o === 'vestido' && curPart === 'shorts') { curPart = 'shirt'; buildSwatches(); syncColorUI(); }
   }
@@ -814,6 +833,11 @@
       syncOutfitUI();
       updateCount();
     });
+  });
+  btnSleeve.addEventListener('click', function () {
+    active.setLongSleeve(!active.longSleeve);
+    syncOutfitUI();
+    updateCount();
   });
   selectCharacter(0);
 
