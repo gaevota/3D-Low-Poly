@@ -196,7 +196,7 @@
     /* casca: esfera de poucas faces, aberta embaixo e com uma janela para o rosto */
     /* longBang = true liga a franja comprida ("Colocar franja"); false é a franja normal */
     /* shortCut = true gera o "Cabelo 5" (curto): a borda de baixo sobe e o cabelo termina na altura das orelhas */
-    /* slimBack = true (cabelo preso, feminino 2): a casca fica mais colada atrás da cabeça, como num cabelo puxado para trás;
+    /* slimBack = true (cabelos femininos 1 e 2): a casca fica mais colada atrás da cabeça, como num cabelo puxado para trás;
        só o z de trás é encolhido (até 8% em z ≤ −0,7), então frente e lados não mudam */
     function buildShell(longBang, noSideTips, shortCut, slimBack) {
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
@@ -259,6 +259,10 @@
       [5.0, 0.56, 0.44, -0.10, 1.22]
     ];
     var LONG_SEGS = 8;                       /* facetas em volta, de um lado ao outro */
+    /* A casca do Cabelo 1 feminino ficou mais justa atrás (slimBack, até 0,08 em z), então o começo da cortina,
+       que nasce por dentro da casca, também recua o fundo (só atrás; lados e frente ficam iguais), senão
+       ela furaria a casca. Vai diminuindo para baixo, onde a cortina já sai por baixo da cúpula. */
+    function LONG_TUCK(y) { return y >= 7.3 ? 0.05 : y >= 7.0 ? 0.035 : y >= 6.6 ? 0.02 : 0; }
     function buildLongHair() {
       rnd = rng(11);
       var pts = [];
@@ -269,7 +273,7 @@
           /* última fileira: pontas em dente, uma mecha mais baixa e a vizinha mais alta */
           var jag = r === LONG_RINGS.length - 1 ? ((s & 1) ? -0.32 : 0.12) : 0;
           var kk = 1 + noise3(th * 2, ring[0], 1.3) * 0.04;
-          row.push([ring[1] * kk * Math.sin(th), ring[0] + jag, ring[3] - ring[2] * kk * Math.cos(th)]);
+          row.push([ring[1] * kk * Math.sin(th), ring[0] + jag, ring[3] - (ring[2] - LONG_TUCK(ring[0])) * kk * Math.cos(th)]);
         }
         pts.push(row);
       }
@@ -291,11 +295,11 @@
     character.add(longHair);
 
     /* Estilo (result.hair) e franja (result.bang) são independentes: qualquer estilo aceita a franja comprida.
-       Masculino: 1 (padrão) e 5 (curto) · Feminino: 3 (comprido) e 6 (preso, rabo de cavalo longo, com a mesma casca do 3) */
+       Masculino: 1 (padrão) e 5 (curto) · Feminino: 3 (comprido) e 6 (preso, rabo de cavalo longo); os dois femininos têm a casca mais justa atrás */
     function rebuildHair() {
       var n = result.hair;
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 6);
+      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 || n === 6);
       longHair.visible = (n === 3);
       ponytail.visible = (n === 6);
     }
