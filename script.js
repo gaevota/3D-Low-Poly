@@ -424,7 +424,8 @@
       /* cada perna fica num grupo que gira em torno do quadril (para andar) */
       var legG = new THREE.Group(); legG.position.set(s * 0.42, 4.0, 0); bodyRoot.add(legG);
       var legIn = new THREE.Group(); legIn.position.set(-s * 0.42, -4.0, 0); legG.add(legIn);
-      legs.push({ g: legG, s: s });
+      var legEntry = { g: legG, s: s, shoe: null };
+      legs.push(legEntry);
       /* bermuda: um cano por perna, com a listra branca na lateral */
       var sl = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.56, 1.1, 8, 1), shortsM);
       sl.scale.z = 0.85;
@@ -587,6 +588,7 @@
         lace.rotation.x = Math.atan2(a - b, 0.08);
         shoe.add(lace);
       });
+      legEntry.shoe = shoe;
       legIn.add(shoe);
     });
 
@@ -1316,6 +1318,26 @@
     if (lookUp > 0) camera.rotateX(lookUp);
   }
 
+  /* Altura que o corpo precisa subir para o ponto mais baixo da sola (calcanhar ou ponta, dos dois pés) ficar no chão.
+     Cada ponto passa pelas mesmas rotações do modelo: tênis (em torno do tornozelo, no chão), perna (em torno do quadril,
+     y = 4) e inclinação do corpo ao correr (em torno dos pés). Antes só se descontava o encurtamento da perna,
+     e a ponta do tênis afundava no chão ao andar e, mais ainda, ao correr. */
+  var HIP_Y = 4.0, SOLE_Z = [-0.38, 1.3], FOOT_PITCH = 0.8;
+  function footLift(a, lean) {
+    var minY = 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    a.legs.forEach(function (l) {
+      var th = l.g.rotation.x, ph = l.shoe ? l.shoe.rotation.x : 0;
+      var ct = Math.cos(th), st = Math.sin(th), cp = Math.cos(ph), sp = Math.sin(ph);
+      SOLE_Z.forEach(function (z) {
+        var Y = -z * sp - HIP_Y, Z = z * cp;                     /* depois do giro do tênis, em relação ao quadril */
+        var y2 = HIP_Y + Y * ct - Z * st, z2 = Y * st + Z * ct;  /* depois do giro da perna */
+        var y3 = y2 * cl - z2 * sl;                              /* depois da inclinação do corpo */
+        if (y3 < minY) minY = y3;
+      });
+    });
+    return -minY;
+  }
+
   var last = performance.now();
   function frame(now) {
     var dt = Math.min(0.05, (now - last) / 1000);
@@ -1349,10 +1371,13 @@
     if (a.outfit === 'vestido') la = Math.min(la, 0.28);
     if (walkK > 0.001) walkPh += dt * (6.5 + 5 * runK);
     var sw = Math.sin(walkPh) * walkK;
-    a.legs.forEach(function (l) { l.g.rotation.x = l.s * sw * la; });
+    a.legs.forEach(function (l) {
+      l.g.rotation.x = l.s * sw * la;
+      if (l.shoe) l.shoe.rotation.x = -FOOT_PITCH * l.g.rotation.x;   /* o pé gira contra a perna, para a sola ficar quase plana */
+    });
     a.armLG.rotation.x = sw * aa;
     a.armRG.rotation.x = waveT0 >= 0 ? 0 : -sw * aa;
-    a.character.position.y = (playing ? pl.y : -4.6) - 3.9 * (1 - Math.cos(la * Math.abs(sw)));
+    a.character.position.y = (playing ? pl.y : -4.6) + footLift(a, 0.12 * runK);
     if (playing) {
       a.character.position.x = pl.x;
       a.character.position.z = pl.z;
