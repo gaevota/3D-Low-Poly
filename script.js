@@ -1077,7 +1077,7 @@
      Vista 1 = câmera em terceira pessoa de antes: orbita a personagem sempre olhando para ela
                (camPitch de ORBIT_MIN até PITCH_MAX); as setas andam como W A S D.
      Vista 2 = vista da sala: abaixo de ORBIT_MIN a câmera fica baixa e só inclina o olhar para
-               cima (até PITCH_MIN),para ver as paredes, o teto e a lâmpada. *
+               cima (até PITCH_MIN), para ver as paredes, o teto e a lâmpada. */
   var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.05;
   var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4;     /* inclinação ao trocar de vista */
   var camView = 1;
