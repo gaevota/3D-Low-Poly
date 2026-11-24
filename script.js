@@ -198,11 +198,9 @@
     /* shortCut = true gera o "Cabelo 5" (curto): a borda de baixo sobe e o cabelo termina na altura das orelhas */
     /* slimBack = fração (0 a 0,15) que o z de trás da casca encolhe (cabelos femininos 1 e 2): fica mais colada atrás da cabeça;
        só o z de trás é encolhido (cheio a partir de z ≤ −0,7), então frente e lados não mudam */
-    var SLIM_F1 = 0.11, SLIM_F2 = 0.08;     /* quanto a casca encolhe atrás: feminino 1 (comprido) e feminino 2 (preso) */
-    var SHELL_F1_SCALE = 1.06;              /* tamanho da casca do feminino 1 (comprido): 1 = normal; cresce em todas as direções a partir de SHELL_C */
-    function buildShell(longBang, noSideTips, shortCut, slimBack, scale) {
+    var SLIM_F1 = 0.06, SLIM_F2 = 0.08;     /* (feminino 1 era 0,11: menor = casca de trás maior) quanto a casca encolhe atrás: feminino 1 (comprido) e feminino 2 (preso) */
+    function buildShell(longBang, noSideTips, shortCut, slimBack) {
     slimBack = slimBack || 0;      /* sem o argumento (cabelo 1 masculino na primeira montagem) = sem encolher; undefined dava NaN e o cabelo sumia */
-    scale = scale || 1;            /* idem: sem o argumento = tamanho normal */
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
     var sp = shellSrc.attributes.position;
@@ -229,7 +227,7 @@
         var fl = vy < 0 ? 1 + 0.14 * (-vy) : 1;
         var bk = slimBack ? Math.max(0, Math.min(1, -vz / 0.7)) : 0;
         var bz = 1 - slimBack * bk * bk * (3 - 2 * bk);
-        kept.push(vx * rr * fl * 1.12 * scale + SHELL_C.x, vy * rr * 1.2 * scale + SHELL_C.y, vz * rr * fl * 1.12 * bz * scale + SHELL_C.z);
+        kept.push(vx * rr * fl * 1.12 + SHELL_C.x, vy * rr * 1.2 + SHELL_C.y, vz * rr * fl * 1.12 * bz + SHELL_C.z);
       }
     }
     var shellGeo = new THREE.BufferGeometry();
@@ -302,7 +300,7 @@
     function rebuildHair() {
       var n = result.hair;
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 ? SLIM_F1 : n === 6 ? SLIM_F2 : 0, n === 3 ? SHELL_F1_SCALE : 1);
+      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 3 ? SLIM_F1 : n === 6 ? SLIM_F2 : 0);
       longHair.visible = (n === 3);
       ponytail.visible = (n === 6);
     }
