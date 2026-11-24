@@ -564,18 +564,31 @@
 
     /* ---------- roupas: masculino (camiseta e shorts) · feminino (vestido ou camiseta e saia) ----------
        A saia começa onde a camiseta termina (y = 4,4, raio 1,0, mesma achatada em z) e abre um pouco até o meio da coxa.
-       Vestido: a saia usa o material da camiseta (mesma cor) e o shorts some.
-       Camiseta e saia: a camiseta fica como está e a saia usa o material do shorts (a cor do "shorts" vira a da saia). */
+       Vestido: a saia comprida usa o material da camiseta (mesma cor) e o shorts some.
+       Camiseta e saia: a camiseta fica como está e uma saia mais curta (miniSkirt, abaixo) usa o material do shorts. */
     var skirt = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.12, 1.3, 8, 1), shirtM);
     skirt.scale.z = 0.6;
     skirt.position.y = 3.75;          /* de 3,1 a 4,4 */
     skirt.visible = false;
     character.add(skirt);
-    /* mode = 'masculino' | 'vestido' | 'saia' */
+    /* Saia (feminino, com camiseta): modelo próprio, diferente do vestido — mais curta (só até o meio da coxa)
+       e bem mais aberta, de 10 lados, com uma barra branca na bainha (como as listras do shorts).
+       Começa um pouco por baixo da barra da camiseta (y = 4,55, raio 0,92) e abre até y = 3,4 (raio 1,3). */
+    var miniSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 1.3, 1.15, 10, 1), shortsM);
+    miniSkirt.scale.z = 0.6;
+    miniSkirt.position.y = 3.975;
+    miniSkirt.visible = false;
+    character.add(miniSkirt);
+    var skirtHem = new THREE.Mesh(new THREE.CylinderGeometry(1.27, 1.31, 0.12, 10, 1, true), M.stripe);
+    skirtHem.scale.z = 0.6;
+    skirtHem.position.y = 3.46;
+    skirtHem.visible = false;
+    character.add(skirtHem);
+    /* mode = 'masculino' (camiseta e shorts) | 'vestido' | 'saia' (camiseta e saia) */
     function setOutfit(mode) {
       shortsParts.forEach(function (m) { m.visible = (mode === 'masculino'); });
-      skirt.visible = (mode !== 'masculino');
-      skirt.material = (mode === 'vestido') ? shirtM : shortsM;
+      skirt.visible = (mode === 'vestido');
+      miniSkirt.visible = skirtHem.visible = (mode === 'saia');
       result.outfit = mode;
     }
 
