@@ -196,7 +196,9 @@
     /* casca: esfera de poucas faces, aberta embaixo e com uma janela para o rosto */
     /* longBang = true liga a franja comprida ("Colocar franja"); false é a franja normal */
     /* shortCut = true gera o "Cabelo 5" (curto): a borda de baixo sobe e o cabelo termina na altura das orelhas */
-    function buildShell(longBang, noSideTips, shortCut) {
+    /* slimBack = true (cabelo preso, feminino 2): a casca fica mais colada atrás da cabeça, como num cabelo puxado para trás;
+       só o z de trás é encolhido (até 8% em z ≤ −0,7), então frente e lados não mudam */
+    function buildShell(longBang, noSideTips, shortCut, slimBack) {
     rnd = rng(7);                 /* mesmas cores de faceta em toda reconstrução */
     var shellSrc = new THREE.IcosahedronGeometry(1, 1);
     var sp = shellSrc.attributes.position;
@@ -221,7 +223,9 @@
         }
         var rr = 1 + noise3(vx, vy, vz) * 0.02;
         var fl = vy < 0 ? 1 + 0.14 * (-vy) : 1;
-        kept.push(vx * rr * fl * 1.12 + SHELL_C.x, vy * rr * 1.2 + SHELL_C.y, vz * rr * fl * 1.12 + SHELL_C.z);
+        var bk = slimBack ? Math.max(0, Math.min(1, -vz / 0.7)) : 0;
+        var bz = 1 - 0.08 * bk * bk * (3 - 2 * bk);
+        kept.push(vx * rr * fl * 1.12 + SHELL_C.x, vy * rr * 1.2 + SHELL_C.y, vz * rr * fl * 1.12 * bz + SHELL_C.z);
       }
     }
     var shellGeo = new THREE.BufferGeometry();
@@ -291,7 +295,7 @@
     function rebuildHair() {
       var n = result.hair;
       hairMesh.geometry.dispose();
-      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5);
+      hairMesh.geometry = buildShell(result.bang, n === 3 || n === 6, n === 5, n === 6);
       longHair.visible = (n === 3);
       ponytail.visible = (n === 6);
     }
@@ -304,7 +308,7 @@
     character.add(head);
 
     /* ---------- Cabelo 6: cabelo preso (rabo de cavalo longo) ----------
-       A casca é a do Cabelo 1 (mesmo tamanho). Atrás da cabeça sai um rabo de facetas
+       A casca é a do Cabelo 1, só que mais justa atrás da cabeça (slimBack). Atrás da cabeça sai um rabo de facetas
        que desce pelas costas. O grupo fica preso à cabeça (acompanha o lugar dela),
        mas com a inclinação e a escala da cabeça desfeitas, para o rabo cair reto e com o mesmo tamanho
        das outras peças. Coordenadas do rabo: origem no ponto onde ele sai da cabeça, y para cima, o rabo desce em y negativo. */
@@ -349,7 +353,7 @@
       return pg;
     }
     var ponyG = new THREE.Group();
-    ponyG.position.set(0, 0.3, -1.12);                    /* atrás da cabeça, um pouco acima do meio (coordenadas da cabeça) */
+    ponyG.position.set(0, 0.3, -1.07);                    /* atrás da cabeça, um pouco acima do meio (coordenadas da cabeça) */
     ponyG.quaternion.copy(head.quaternion).invert();
     ponyG.scale.setScalar(1 / 0.92);
     var ponytail = new THREE.Mesh(buildPonytail(), hairM);
@@ -814,7 +818,7 @@
   colorCustom.addEventListener('input', function () { applyColor(colorCustom.value); });
 
   /* ---------- cabelo: só o Personagem 1 tem a opção ----------
-     Masculino: Cabelo 1 e 5 · Feminino: Cabelo 3 e 6 · "Colocar franja" liga a franja comprida em qualquer um (data-hair = número do cabelo) */
+     Masculino: Cabelo 1 e 2 (data-hair 1 e 5) · Feminino: Cabelo 1 e 2 (data-hair 3 e 6) · "Colocar franja" liga a franja comprida em qualquer um (data-hair = número do cabelo) */
   var hairPicker = document.getElementById('hairPicker');
   var btnHair = Array.prototype.slice.call(hairPicker.querySelectorAll('[data-hair]'));
   var btnBang = document.getElementById('btnBang');
