@@ -967,7 +967,10 @@
 
   M.floor = mat(0xffffff, { vertexColors: true });
   M.wall = mat(0xe6e1ec, { side: DS });
-  M.ceiling = mat(0xf5f2f9, { side: DS });
+  /* teto sem sombreamento (MeshBasic): a luz da lâmpada, que fica colada no teto, não forma uma mancha clara nele.
+     A cor é trocada em setLight para o teto escurecer junto quando a luz é desligada. */
+  var CEIL_ON = 0xc9c5d0, CEIL_OFF = 0x26242c;
+  M.ceiling = new THREE.MeshBasicMaterial({ color: CEIL_ON, side: DS });
   M.lampCord = mat(0x2a2a30);
   M.lampShade = mat(0xe9e2d0, { side: DS });
   M.bulb = new THREE.MeshBasicMaterial({ color: 0xfff2c4 });
@@ -1021,14 +1024,8 @@
   var bulb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), M.bulb);
   bulb.position.y = -1.75;
   lamp.add(bulb);
-  /* a cúpula só deixa a luz sair para baixo: um refletor (SpotLight) apontado para o chão, no lugar do bulbo.
-     Assim o teto, que fica acima da lâmpada, não recebe luz e não vira uma mancha clara. */
-  var lampLight = new THREE.SpotLight(0xfff0d0, 1.5, 90, 1.45, 0.6, 1);
-  lampLight.position.set(0, ROOM_H - 1.8, 0);
-  var lampTarget = new THREE.Object3D();
-  lampTarget.position.set(0, 0, 0);
-  room.add(lampTarget);
-  lampLight.target = lampTarget;
+  var lampLight = new THREE.PointLight(0xfff0d0, 1.15, 90, 1);
+  lampLight.position.set(0, ROOM_H - 1.9, 0);
   room.add(lampLight);
 
   /* interruptor de parede (parede do fundo): placa + alavanca que vira para cima (ligado) ou para baixo (desligado) */
@@ -1047,12 +1044,13 @@
 
   /* luz da sala: liga/desliga a lâmpada (a luz ambiente fica bem fraca para a sala não sumir por completo) */
   var lightOn = true;
-  var LAMP_INTENSITY = 1.5, AMBIENT_ON = 0.65, AMBIENT_OFF = 0.1;
+  var LAMP_INTENSITY = 1.15, AMBIENT_ON = 0.65, AMBIENT_OFF = 0.1;
   function setLight(on) {
     lightOn = on;
     lampLight.intensity = on ? LAMP_INTENSITY : 0;
     if (playing) hemi.intensity = on ? AMBIENT_ON : AMBIENT_OFF;
     M.bulb.color.set(on ? 0xfff2c4 : 0x4a4a52);
+    M.ceiling.color.set(on ? CEIL_ON : CEIL_OFF);
     swLever.rotation.x = on ? -0.4 : 0.4;
     swLever.position.y = on ? 0.18 : -0.18;
   }
