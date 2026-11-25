@@ -1,0 +1,58 @@
+:root{box-sizing:border-box;--bg:#14111f;--ink:#f3ece4;--btn:#26212e;color-scheme:dark;--h:min(84vh,calc(96vw*16/9));--w:calc(var(--h)*9/16)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Baloo 2','Comic Sans MS',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px}
+h1{margin:4px 0 0;font-size:1.3rem;text-align:center}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;width:max(var(--w),min(96vw,560px))}
+button{font:inherit;font-weight:700;color:var(--ink);background:var(--btn);border:2px solid #4b4260;border-radius:999px;padding:5px 15px;cursor:pointer}
+button:hover{border-color:#b9a6e8}button.on{background:#f3ece4;color:#14111f}
+#ep{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+#wrap{position:relative;height:var(--h);aspect-ratio:9/16;border-radius:0;overflow:hidden;background:#000;box-shadow:0 12px 40px #0008}
+#wrap:fullscreen{width:100%;height:100%;aspect-ratio:auto;border-radius:0}
+#sc{flex:1;min-width:140px;accent-color:#b9a6e8}
+#speed{font:inherit;font-weight:700;color:var(--ink);background:var(--btn);border:2px solid #4b4260;border-radius:999px;padding:5px 10px}
+#tabs{display:flex;gap:8px;justify-content:center}
+#sub{width:max(var(--w),min(96vw,560px));min-height:3.4em;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(1.05rem,2.2vw,1.4rem);font-weight:700;line-height:1.35;padding:8px 18px;border-radius:14px;background:#0006;color:#fff3bd}
+#narPanel{display:none;width:max(var(--w),min(96vw,720px));flex-direction:column;gap:10px}
+#narPanel.show{display:flex}
+#narBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#narBar input[type=text]{flex:1;min-width:160px;background:#26212e;color:var(--ink);border:2px solid #4b4260;border-radius:999px;padding:5px 14px;font:inherit}
+#narList{max-height:min(1000px,78vh);overflow-y:auto;background:#1c1830;border-radius:18px;padding:14px 18px;line-height:1.75;font-size:1.08rem;scroll-behavior:smooth}
+.nl{display:inline;cursor:pointer;padding:1px 3px;border-radius:6px;opacity:.62;transition:opacity .2s,background .2s}
+.nl:hover{opacity:1;background:#2f2946}
+.nl.cur{opacity:1;background:#f3ece4;color:#14111f;font-weight:700}
+.nl.hit{outline:2px solid #ffd785}
+.nl.todo{opacity:.3;font-style:italic}
+.nt{display:block;margin:10px 0 2px;font-size:.85rem;opacity:.6}
+/* ================= ESTILO DO PALCO DO VÍDEO (720x1280, escalado por JS) =================
+   Acima: estilo da página e dos botões. Abaixo: legenda (#cap), chips, etiquetas, termômetro, banner. */
+#stage{position:absolute;left:0;top:0;width:720px;height:1280px;transform-origin:0 0;overflow:hidden;font-family:'Poppins','Inter',sans-serif}
+#bg{position:absolute;inset:0}
+#stage canvas{position:absolute;left:0;top:0;width:720px;height:1280px}
+#ov{position:absolute;inset:0;pointer-events:none}
+.chip{position:absolute;left:50%;display:flex;align-items:center;gap:12px;padding:10px 22px 10px 12px;border-radius:40px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.28);border:3px solid rgba(255,255,255,.9);white-space:nowrap;transform-origin:50% 50%}
+.chip .ic{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px}
+.chip b{display:block;font-size:26px;letter-spacing:.5px;line-height:1.1;font-weight:700}
+.chip small{display:block;font-size:17px;opacity:.95;font-weight:600;line-height:1.15}
+.chip.green{background:#16a34a}.chip.green .ic{color:#16a34a}
+.chip.blue{background:#2563eb}.chip.blue .ic{color:#2563eb}
+.chip.red{background:#dc2626}.chip.red .ic{color:#dc2626}
+.chip.orange{background:#ea7a10}.chip.orange .ic{color:#ea7a10}
+.tag{position:absolute;padding:5px 12px;border-radius:9px;background:#fff;color:#0b1b3a;font-weight:700;font-size:17px;box-shadow:0 4px 12px rgba(0,0,0,.3);white-space:nowrap;transform:translate(-50%,-50%);border:2px solid #0b1b3a}
+.dot{position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #0b1b3a;transform:translate(-50%,-50%)}
+.line{position:absolute;height:3px;background:#0b1b3a;transform-origin:0 50%}
+#bubble{position:absolute;width:74px;height:74px;border-radius:50%;background:#fff;border:4px solid #0b1b3a;font-weight:800;font-size:46px;color:#0b1b3a;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%)}
+#cap{position:absolute;left:0;right:0;top:985px;text-align:center;padding:0 40px;font-weight:700;font-size:54px;line-height:1.12;color:#fff;-webkit-text-stroke:11px #0a1530;paint-order:stroke fill;text-shadow:0 5px 0 rgba(10,21,48,.55);letter-spacing:.3px}
+#cap span{display:inline-block;margin:0 .12em}
+#dip{position:absolute;inset:0;background:#0a1530;opacity:0}
+.chip{display:none!important}
+.chg{position:absolute;width:64px;height:64px;border-radius:50%;border:4px solid #fff;color:#fff;font-weight:800;font-size:46px;line-height:52px;text-align:center;transform:translate(-50%,-50%);box-shadow:0 4px 12px rgba(0,0,0,.35);opacity:0}
+.chg.p{background:#e5484d}.chg.n{background:#2f6df6}
+#thermo{position:absolute;left:640px;top:285px;width:64px;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0}
+#thermo .tube{width:34px;height:330px;border-radius:20px;background:#fff;border:4px solid #0b1b3a;position:relative;overflow:hidden}
+#thermo .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#ffb347,#e11d48)}
+#thermo .deg{font-weight:800;font-size:22px;color:#fff;-webkit-text-stroke:5px #0a1530;paint-order:stroke fill;white-space:nowrap}
+#ban{position:absolute;left:360px;top:430px;width:230px;height:230px;margin:-115px 0 0 -115px;border-radius:50%;border:20px solid #dc2626;background:#fff;display:flex;align-items:center;justify-content:center;font-size:130px;opacity:0;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#ban:after{content:'';position:absolute;left:-8px;right:-8px;top:50%;height:20px;margin-top:-10px;background:#dc2626;transform:rotate(-45deg);border-radius:10px}
+/* link de volta para a lista de episódios (não vem do arquivo original do episódio) */
+.voltar{align-self:flex-start;color:var(--ink);text-decoration:none;font-weight:700;background:var(--btn);border:2px solid #4b4260;border-radius:999px;padding:3px 14px}
+.voltar:hover,.voltar:focus-visible{border-color:#b9a6e8}

@@ -1,5 +1,5 @@
 /* ============================================================================
-   interface.js — abas dos personagens, seletor de cor, botões de cabelo e de roupa.
+   interface.js — abas dos personagens, seletor de cor, botões de cabelo e de roupa e o botão Episódios.
    Define: characters, active, selectCharacter(), updateCount(), curPart, PALETTES, syncColorUI/HairUI/OutfitUI...
    Usa:    createCharacter, setPartColor (personagem.js), rig, stage
    ============================================================================ */
@@ -190,5 +190,11 @@ btnSleeve.addEventListener('click', function () {
   active.setLongSleeve(!active.longSleeve);
   syncOutfitUI();
   updateCount();
+});
+/* ---------- episódios ----------
+   O botão (o primeiro da fila) abre a página episodios/index.html, com a lista de episódios.
+   Uma espera bem curta antes de trocar de página deixa o som do clique começar a tocar. */
+document.getElementById('btnEpisodios').addEventListener('click', function () {
+  setTimeout(function () { window.location.href = 'episodios/index.html'; }, 200);
 });
 selectCharacter(0);

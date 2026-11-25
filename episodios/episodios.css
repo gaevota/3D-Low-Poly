@@ -1,0 +1,42 @@
+/* Página Episódios: mesma paleta da página principal (claro e escuro). */
+:root {
+  color-scheme: light;
+  --bg: #b9b5ae; --fg: #1f1e26; --muted: #4b4a55;
+  --panel: rgba(255, 255, 255, 0.42); --line: rgba(31, 30, 38, 0.25);
+  --accent: #33409c; --accent-fg: #ffffff;
+  --font-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #1f2027; --fg: #ecedf6; --muted: #a6a8c0;
+    --panel: rgba(255, 255, 255, 0.08); --line: rgba(255, 255, 255, 0.2);
+    --accent: #9aa7ff; --accent-fg: #12132b;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--font-body); }
+.lista-pagina {
+  max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;
+  padding: max(14px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+}
+header { display: flex; align-items: center; gap: 14px; }
+h1 { margin: 0; font: 600 1.45rem/1.15 var(--font-display); }
+.voltar {
+  color: var(--fg); text-decoration: none; font-weight: 600; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px;
+}
+.voltar:hover, .voltar:focus-visible { border-color: var(--accent); }
+.episodios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.episodio {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-decoration: none; color: inherit;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+}
+.episodio:hover, .episodio:focus-visible { border-color: var(--accent); }
+.num { font: 600 1.6rem/1 var(--font-display); color: var(--accent); min-width: 1.4em; text-align: center; }
+.emoji { font-size: 1.8rem; }
+.info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.info strong { font: 600 1.05rem/1.25 var(--font-display); }
+.resumo { color: var(--muted); }
+.dur { color: var(--muted); font-variant-numeric: tabular-nums; }
