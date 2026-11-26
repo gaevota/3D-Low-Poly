@@ -255,7 +255,7 @@ function createCharacter(variant) {
     result.outfit = mode;
   }
 
-  Object.assign(result, { character: character, armRG: armRG, armLG: armLG, hand1: hand1, handBaseQ: handBaseQ, handUp: handUp, handX: H1[0], legs: legs,
+  Object.assign(result, { character: character, head: head, armRG: armRG, armLG: armLG, hand1: hand1, handBaseQ: handBaseQ, handUp: handUp, handX: H1[0], legs: legs,
                  parts: {                       /* peças que mudam de cor: materiais principais + os de tom mais escuro (k = quanto escurece) */
                    shirt: { main: [shirtM], dark: [shirtD], k: 0.72, hex: null },    /* a gola usa o tom escuro */
                    shorts: { main: [shortsM], dark: [], hex: null },

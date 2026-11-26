@@ -19,6 +19,11 @@ var camYaw = 0, camPitch = 0.4;
              a própria câmera, mas continua existindo e aparece no espelho) e olha para onde o mouse aponta; camPitch positivo = olhar para baixo. */
 var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.05;
 var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4, VIEW3_PITCH = 0;     /* inclinação ao trocar de vista */
+/* vista 3: quem manda no andar é ctlYaw (o "frente" dos controles); camYaw = ctlYaw + fpOff. Ao andar de lado ou para trás, fpOff
+   vai até a direção do passo (a vista acompanha o corpo, que se vira para onde anda) sem mudar a direção em que se anda;
+   ao parar, o novo olhar vira o "frente" (ctlYaw = camYaw). O mouse mexe em camYaw e ctlYaw por igual. */
+var ctlYaw = 0, fpOff = 0, lastCamYaw = 0;
+function wrapPi(a) { return Math.atan2(Math.sin(a), Math.cos(a)); }
 var EYE_Y = 8.0;                               /* altura dos olhos na vista 3 (a cabeça fica em y = 7,92) */
 var FOV_ORBIT = 35, FOV_FIRST = 75;            /* campo de visão: vistas 1 e 2 / vista 3 (primeira pessoa) */
 var camView = 1;
@@ -41,6 +46,7 @@ function setBodyLayer(obj, layer) {
 }
 function setView(n) {
   camView = n;
+  ctlYaw = camYaw; fpOff = 0; lastCamYaw = camYaw;
   camPitch = n === 3 ? VIEW3_PITCH : (n === 2 ? VIEW2_PITCH : VIEW1_PITCH);
   document.getElementById('btnView1').setAttribute('aria-pressed', n === 1 ? 'true' : 'false');
   document.getElementById('btnView2').setAttribute('aria-pressed', n === 2 ? 'true' : 'false');
@@ -231,11 +237,26 @@ function updatePlay(dt) {
   var f = ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
   var r = ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
   sprint = !!(keys.ShiftLeft || keys.ShiftRight);
-  var sy = Math.sin(camYaw), cy = Math.cos(camYaw);
+  var first = camView === 3;
+  var yawCtl = camYaw;
+  if (first) {
+    ctlYaw += wrapPi(camYaw - lastCamYaw);     /* o que o mouse girou desde o último quadro */
+    yawCtl = ctlYaw;
+  }
+  var sy = Math.sin(yawCtl), cy = Math.cos(yawCtl);
   var dx = -sy * f + cy * r;
   var dz = -cy * f - sy * r;
   var len = Math.sqrt(dx * dx + dz * dz);
   moving = len > 0.001;
+  if (first) {
+    if (moving) {                              /* a vista gira até a direção do passo: 0 = frente, ±90° = lados, 180° = para trás */
+      fpOff += wrapPi(Math.atan2(-r, f) - fpOff) * Math.min(1, dt * 10);
+      camYaw = ctlYaw + fpOff;
+    } else {
+      ctlYaw = camYaw; fpOff = 0;
+    }
+    lastCamYaw = camYaw;
+  }
   if (!moving) return;
   dx /= len; dz /= len;
   var sp = sprint ? RUN_SPEED : WALK_SPEED;

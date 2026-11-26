@@ -71,6 +71,12 @@ function frame(now) {
     a.character.rotation.y = pl.face;
   }
   a.character.rotation.x = 0.12 * runK;
+  /* vista 3: a cabeça acompanha um pouco o olhar para a direita ou para a esquerda (visível no espelho); fora dela volta ao normal */
+  if (a.head) {
+    var headY = 0.1;                                              /* giro de repouso da cabeça (personagem.js) */
+    if (playing && camView === 3) headY += clamp(wrapPi(camYaw - (pl.face + Math.PI)) * 0.4, -0.55, 0.55);
+    a.head.rotation.y += (headY - a.head.rotation.y) * Math.min(1, dt * 12);
+  }
   rig.rotation.x = pitch;
   zoomCur += (zoom - zoomCur) * Math.min(1, dt * 8);
   if (playing) applyPlayCamera(); else applyCamera();
