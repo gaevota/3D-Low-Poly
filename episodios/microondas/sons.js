@@ -15,6 +15,9 @@
 
   /* passos do personagem: os mesmos sons do jogo da página principal. Cada pisada sorteia um (sem repetir o último). */
   var PASSO_VOL = 0.45;
+  /* silêncio no começo de cada mp3 (em s): é pulado, para o som sair na hora em que o pé toca o chão.
+     Se trocar os arquivos de passo, ajuste estes valores. */
+  var PASSO_INICIO = [0.27, 0.25, 0, 0.40];
   var passos = [1, 2, 3, 4].map(function (n) {
     var a = new Audio('../../audio/passo-' + n + '.mp3');
     a.preload = 'auto';
@@ -26,6 +29,7 @@
     ultimo = i;
     var s = passos[i].cloneNode(true);
     s.volume = PASSO_VOL;
+    s.currentTime = PASSO_INICIO[i];
     var p = s.play();
     if (p && p.catch) p.catch(function () {});
   };

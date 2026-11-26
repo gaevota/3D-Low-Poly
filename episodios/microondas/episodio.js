@@ -670,11 +670,12 @@ function frame(){
 function seek(t){PT=clamp(t,0,TOT-.001);frame();if(au.src)au.currentTime=Math.max(0,PT-(+$('#off').value))}
 function play(on){playing=on;$('#bPlay').textContent=on?'⏸ Pausar':'▶ Reproduzir';$('#nPlay').textContent=on?'⏸ Pausar':'▶ Reproduzir';
  if(on){if(PT>=TOT-.05)seek(0);lastN=performance.now();if(au.src){au.currentTime=Math.max(0,PT-(+$('#off').value));au.play().catch(()=>{})}}else au.pause()}
-// um som por pisada enquanto o personagem sai andando (cena 1). O pé toca o chão quando a fase da passada (t*9) é π/2 + k·π.
+// um som por pisada enquanto o personagem anda: saindo (fim da cena 1) e entrando (início da cena 13). O pé toca o chão quando a fase da passada (t*9) é π/2 + k·π.
 const passada=t=>Math.floor((t*9-Math.PI/2)/Math.PI);
 function somDosPassos(antes,agora){
  if(agora<=antes||agora-antes>.5)return;                      // voltar ou pular no vídeo não faz som
- if(agora>=at(2,-1)&&agora<at(2)&&passada(agora)!==passada(antes)&&window.tocarPasso)window.tocarPasso()}
+ const andando=(agora>=at(2,-1)&&agora<at(2))||(agora>=at(13,.07)&&agora<at(13,1.1));
+ if(andando&&passada(agora)!==passada(antes)&&window.tocarPasso)window.tocarPasso()}
 function loop(n){if(playing){const antes=PT;PT+=Math.min(.1,(n-lastN)/1000)*speed;lastN=n;
   if(au.src&&!au.paused&&Number.isFinite(au.currentTime))PT=clamp(au.currentTime+(+$('#off').value),0,TOT);
   somDosPassos(antes,PT);
