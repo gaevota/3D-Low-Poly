@@ -73,9 +73,13 @@ function frame(now) {
   a.character.rotation.x = 0.12 * runK;
   /* vista 3: a cabeça acompanha um pouco o olhar para a direita ou para a esquerda (visível no espelho); fora dela volta ao normal */
   if (a.head) {
-    var headY = 0.1;                                              /* giro de repouso da cabeça (personagem.js) */
-    if (playing && camView === 3) headY += clamp(wrapPi(camYaw - (pl.face + Math.PI)) * 0.4, -0.55, 0.55);
+    var headY = 0.1, headX = 0.2;                                 /* giros de repouso da cabeça (personagem.js) */
+    if (playing && camView === 3) {
+      headY += clamp(wrapPi(camYaw - (pl.face + Math.PI)) * 0.4, -0.55, 0.55);   /* olhar para a esquerda ou direita */
+      headX += clamp(camPitch * 0.5, -0.6, 0.6);                                   /* olhar para cima (camPitch < 0) ou para baixo */
+    }
     a.head.rotation.y += (headY - a.head.rotation.y) * Math.min(1, dt * 12);
+    a.head.rotation.x += (headX - a.head.rotation.x) * Math.min(1, dt * 12);
   }
   rig.rotation.x = pitch;
   zoomCur += (zoom - zoomCur) * Math.min(1, dt * 8);
