@@ -40,7 +40,8 @@ button:hover{border-color:#b9a6e8}button.on{background:#f3ece4;color:#14111f}
   #bPlay{min-width:10em}
   #bar label{margin-left:auto}
   #sub{min-height:5em}
-  #scenes{justify-content:space-between;gap:14px 8px}
+  #scenes{justify-content:center;gap:10px}
+  #scenesTitle{text-align:center;margin-bottom:-16px}
   #scenes button{min-width:46px;height:46px;padding:0 8px}
   #opts{justify-content:space-between}
   #narPanel{width:min(100%,1100px)}
