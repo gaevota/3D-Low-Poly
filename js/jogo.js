@@ -253,7 +253,9 @@ function updatePlay(dt) {
   var sp = sprint ? RUN_SPEED : WALK_SPEED;
   pl.x = clamp(pl.x + dx * sp * dt, -LIM_X, LIM_X);
   pl.z = clamp(pl.z + dz * sp * dt, -LIM_Z, LIM_Z);
-  var target = Math.atan2(dx, dz);           /* a personagem olha para +z quando rotation.y = 0 */
+  /* a personagem olha para +z quando rotation.y = 0. Vistas 1 e 2: o corpo vira para onde anda.
+     Vista 3 (primeira pessoa): o corpo não vira ao andar de lado (A/D) ou para trás (S); fica de frente para onde o mouse aponta */
+  var target = first ? camYaw + Math.PI : Math.atan2(dx, dz);
   var diff = Math.atan2(Math.sin(target - pl.face), Math.cos(target - pl.face));
   pl.face += diff * Math.min(1, dt * 12);
 }
