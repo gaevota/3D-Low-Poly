@@ -23,16 +23,15 @@ button:hover{border-color:#b9a6e8}button.on{background:#f3ece4;color:#14111f}
 .nl.hit{outline:2px solid #ffd785}
 .nl.todo{opacity:.3;font-style:italic}
 .nt{display:block;margin:10px 0 2px;font-size:.85rem;opacity:.6}
-/* controles: em telas estreitas ficam abaixo do vídeo; em telas largas, ao lado dele (veja o @media) */
+/* controles: em telas estreitas ficam abaixo do vídeo; em telas largas, continuam abaixo, mais abertos na horizontal (veja o @media) */
 #side{display:flex;flex-direction:column;align-items:center;gap:20px;width:max(var(--w),min(96vw,560px));max-width:100%}
 #side>.row,#side>#sub,#scenesTitle{width:100%}
 #scenesTitle{font-weight:700;font-size:1rem;opacity:.9;text-align:left}
 #scenesTitle span{font-weight:400;opacity:.7}
 #opts{font-size:.9rem;opacity:.85;gap:12px 24px}
 @media (min-width:1150px){
-  #ep{flex-direction:row;justify-content:center;align-items:center;gap:clamp(32px,4vw,72px);padding:0 24px}
-  #wrap{flex:none}
-  #side{flex:1;width:auto;min-width:0;max-width:960px;gap:32px}
+  #ep{gap:28px}
+  #side{width:min(100% - 48px,1100px);gap:32px}
   #bar{justify-content:flex-start;gap:20px 14px}
   /* barra de tempo numa linha só dela, acima dos botões */
   #sc{order:-2;flex:1 1 calc(100% - 130px)}
@@ -41,7 +40,7 @@ button:hover{border-color:#b9a6e8}button.on{background:#f3ece4;color:#14111f}
   #bPlay{min-width:10em}
   #bar label{margin-left:auto}
   #sub{min-height:5em}
-  #scenes{justify-content:flex-start;gap:14px}
+  #scenes{justify-content:space-between;gap:14px 8px}
   #scenes button{min-width:46px;height:46px;padding:0 8px}
   #opts{justify-content:space-between}
   #narPanel{width:min(100%,1100px)}
