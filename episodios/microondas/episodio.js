@@ -686,7 +686,7 @@ addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==
 (()=>{
  const list=$('#narList');let lastMin=-1;
  const els=CU.map((n,i)=>{const m=Math.floor(n[0]/60);
-  if(m!==lastMin){lastMin=m;const h=document.createElement('span');h.className='nt';h.textContent=m+':00';list.appendChild(h)}
+  if(m!==lastMin){lastMin=m;const h=document.createElement('span');h.className='nt';h.textContent='⏱ '+m+':00';list.appendChild(h)}
   const s=document.createElement('span');s.className='nl'+(n[0]>=TOT?' todo':'');s.textContent=n[2]+' ';s.title=fmt(n[0])+(n[0]>=TOT?' · ainda não animado':'');
   s.onclick=()=>seek(n[0]);list.appendChild(s);return s});
  let cur=-1;
@@ -707,7 +707,7 @@ addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==
   els.forEach(el=>{const h=q.length>1&&el.textContent.toLowerCase().includes(q);el.classList.toggle('hit',h);if(h&&!first)first=el});
   if(first)first.scrollIntoView({block:'center'})};
  $('#nCopy').onclick=async()=>{const txt=CU.map(n=>n[2]).join(' ');
-  try{await navigator.clipboard.writeText(txt);$('#nCopy').textContent='Copiado'}catch(_){$('#nCopy').textContent='Não foi possível'}
+  try{await navigator.clipboard.writeText(txt);$('#nCopy').textContent='✅ Copiado'}catch(_){$('#nCopy').textContent='⚠️ Não foi possível'}
   setTimeout(()=>$('#nCopy').textContent='📋 Copiar texto',1800)};
 })();
 
