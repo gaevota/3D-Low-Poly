@@ -1,4 +1,4 @@
-/* sons.js — som dos botões e links do episódio. Usa o mesmo som de botão da página principal (audio/botoes.mp3).
+/* sons.js — sons do episódio: botões e links (audio/botoes.mp3) e passos do personagem (audio/passo-1.mp3 a passo-4.mp3).
    Um único ouvinte de clique cobre todos os botões e links da página, inclusive os criados depois pelo código.
    Arquivo que não existir é ignorado: a página fica sem som, mas funciona normalmente. */
 (function () {
@@ -12,6 +12,23 @@
     var p = s.play();
     if (p && p.catch) p.catch(function () {});
   }
+
+  /* passos do personagem: os mesmos sons do jogo da página principal. Cada pisada sorteia um (sem repetir o último). */
+  var PASSO_VOL = 0.45;
+  var passos = [1, 2, 3, 4].map(function (n) {
+    var a = new Audio('../../audio/passo-' + n + '.mp3');
+    a.preload = 'auto';
+    return a;
+  });
+  var ultimo = -1;
+  window.tocarPasso = function () {
+    var i = (ultimo + 1 + Math.floor(Math.random() * (passos.length - 1))) % passos.length;
+    ultimo = i;
+    var s = passos[i].cloneNode(true);
+    s.volume = PASSO_VOL;
+    var p = s.play();
+    if (p && p.catch) p.catch(function () {});
+  };
 
   document.addEventListener('click', function (e) {
     var el = e.target.closest && e.target.closest('button, a[href]');

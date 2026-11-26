@@ -552,8 +552,7 @@ function drawMicrowave(t,sc){
   if(sc>=3)steam(t,-.6,.9,.1,sc===4?.7:.3);
   // personagem: aparece só na cena 1 e sai andando pela direita antes de a cena 2 começar
   if(t<at(2)){const out=sm((t-at(2,-1.0))/1.0);   // último segundo da cena 1
-   const wv=t>.4&&out===0;
-   const o={ry:lerp(-1.75,1.57,sm(out*4)),armR:wv?2.5+Math.sin(t*5)*.22:.12,armL:.12};   // vira para a direita e sai
+   const o={ry:lerp(-1.75,1.57,sm(out*4)),armR:.12,armL:.12};   // vira para a direita e sai
    const bx=BX+out*6;
    o.walk=out>0?1:0;o.ph=t*9;   // anda (pernas e braços) enquanto se desloca
    personagem(bx,FLR,BZ,BSC,t,o);
@@ -671,8 +670,14 @@ function frame(){
 function seek(t){PT=clamp(t,0,TOT-.001);frame();if(au.src)au.currentTime=Math.max(0,PT-(+$('#off').value))}
 function play(on){playing=on;$('#bPlay').textContent=on?'⏸ Pausar':'▶ Reproduzir';$('#nPlay').textContent=on?'⏸ Pausar':'▶ Reproduzir';
  if(on){if(PT>=TOT-.05)seek(0);lastN=performance.now();if(au.src){au.currentTime=Math.max(0,PT-(+$('#off').value));au.play().catch(()=>{})}}else au.pause()}
-function loop(n){if(playing){PT+=Math.min(.1,(n-lastN)/1000)*speed;lastN=n;
+// um som por pisada enquanto o personagem sai andando (cena 1). O pé toca o chão quando a fase da passada (t*9) é π/2 + k·π.
+const passada=t=>Math.floor((t*9-Math.PI/2)/Math.PI);
+function somDosPassos(antes,agora){
+ if(agora<=antes||agora-antes>.5)return;                      // voltar ou pular no vídeo não faz som
+ if(agora>=at(2,-1)&&agora<at(2)&&passada(agora)!==passada(antes)&&window.tocarPasso)window.tocarPasso()}
+function loop(n){if(playing){const antes=PT;PT+=Math.min(.1,(n-lastN)/1000)*speed;lastN=n;
   if(au.src&&!au.paused&&Number.isFinite(au.currentTime))PT=clamp(au.currentTime+(+$('#off').value),0,TOT);
+  somDosPassos(antes,PT);
   if(PT>=TOT){PT=TOT-.001;play(false)}frame()}requestAnimationFrame(loop)}
 $('#bPlay').onclick=()=>play(!playing);$('#bRe').onclick=()=>{seek(0);play(true)};
 $('#bPrev').onclick=()=>seek(PT-ST[si]>1?ST[si]:(ST[si-1]??0));$('#bNext').onclick=()=>seek(ST[si+1]??TOT);
