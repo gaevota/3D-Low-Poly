@@ -239,9 +239,13 @@ function updatePlay(dt) {
   sprint = !!(keys.ShiftLeft || keys.ShiftRight);
   var first = camView === 3;
   var yawCtl = camYaw;
+  var dYaw = wrapPi(camYaw - lastCamYaw);      /* o que o mouse girou desde o último quadro */
   if (first) {
-    ctlYaw += wrapPi(camYaw - lastCamYaw);     /* o que o mouse girou desde o último quadro */
+    ctlYaw += dYaw;
     yawCtl = ctlYaw;
+  } else {
+    pl.face += dYaw;                           /* vistas 1 e 2: o corpo gira junto com o mouse, mantendo a posição em relação à câmera */
+    lastCamYaw = camYaw;
   }
   var sy = Math.sin(yawCtl), cy = Math.cos(yawCtl);
   var dx = -sy * f + cy * r;
@@ -257,7 +261,11 @@ function updatePlay(dt) {
     }
     lastCamYaw = camYaw;
   }
-  if (!moving) return;
+  if (!moving) {
+    /* vista 3, parado: o corpo gira até ficar de frente para onde o mouse aponta (a cabeça vai um pouco na frente) */
+    if (first) pl.face += wrapPi(camYaw + Math.PI - pl.face) * Math.min(1, dt * 10);
+    return;
+  }
   dx /= len; dz /= len;
   var sp = sprint ? RUN_SPEED : WALK_SPEED;
   pl.x = clamp(pl.x + dx * sp * dt, -LIM_X, LIM_X);
