@@ -550,13 +550,14 @@ function drawMicrowave(t,sc){
   ramen(t,t*.6,RAMEN_POS);
   if(t>=T_WAVES&&sc<=4){waves(t,sc===4?.35:1)}
   if(sc>=3)steam(t,-.6,.9,.1,sc===4?.7:.3);
-  // personagem
-  if(t<at(3)){const out=sm((t-at(2,4.55))/1.0);const wv=t>at(2,0.4)&&t<at(2,5.05);
-   const o={ry:-1.75,armR:wv?2.5+Math.sin(t*5)*.22:.12,armL:.12};
-   const wk=sm((t-at(2,0.15))/.9),bx=lerp(BX,4.7,wk)+out*3.5,bz=lerp(BZ,.5,wk);o.ry=lerp(-1.75,-1.3,wk);
-   const andando=(wk>0&&wk<1)||(out>0&&out<1);o.walk=andando?1:0;o.ph=t*9;   // anda (pernas e braços) enquanto se desloca
-   personagem(bx,FLR,bz,BSC,t,o);
-   const hp=toScreen([bx,FLR+2.02*BSC*TAM+.46,bz]);bubble.style.left=hp[0]+'px';bubble.style.top=hp[1]+'px';const bo=clamp((t-at(1,0.3))/.3)*clamp((at(2,0.55)-t)/.3);bubble.style.opacity=bo;bubble.style.transform=`translate(-50%,-50%) scale(${.6+.4*bo})`;}
+  // personagem: aparece só na cena 1 e sai andando pela direita antes de a cena 2 começar
+  if(t<at(2)){const out=sm((t-at(2,-1.0))/1.0);   // último segundo da cena 1
+   const wv=t>.4&&out===0;
+   const o={ry:lerp(-1.75,1.57,sm(out*4)),armR:wv?2.5+Math.sin(t*5)*.22:.12,armL:.12};   // vira para a direita e sai
+   const bx=BX+out*6;
+   o.walk=out>0?1:0;o.ph=t*9;   // anda (pernas e braços) enquanto se desloca
+   personagem(bx,FLR,BZ,BSC,t,o);
+   const hp=toScreen([bx,FLR+2.02*BSC*TAM+.46,BZ]);bubble.style.left=hp[0]+'px';bubble.style.top=hp[1]+'px';const bo=clamp((t-at(1,0.3))/.3)*clamp((at(2,-0.7)-t)/.3);bubble.style.opacity=bo;bubble.style.transform=`translate(-50%,-50%) scale(${.6+.4*bo})`;}
   else bubble.style.opacity=0;
   if(sc===4||t>=at(4,0.29)){ // water droplets rising from the bowl
    const dr=rng(5);for(let i=0;i<16;i++){const an=dr()*6.28,rad=Math.sqrt(dr())*.55,ph=dr();const age=((t*.32+ph)%1);const a=Math.sin(Math.PI*age)*clamp((t-at(4,0.39))/.6);
