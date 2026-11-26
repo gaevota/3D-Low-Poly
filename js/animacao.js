@@ -74,6 +74,7 @@ function frame(now) {
   rig.rotation.x = pitch;
   zoomCur += (zoom - zoomCur) * Math.min(1, dt * 8);
   if (playing) applyPlayCamera(); else applyCamera();
+  if (playing) renderMirror();                  /* espelho da sala (sala.js): desenha o reflexo antes do quadro principal */
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }

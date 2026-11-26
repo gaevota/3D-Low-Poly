@@ -15,8 +15,8 @@ var camYaw = 0, camPitch = 0.4;
              (camPitch de ORBIT_MIN até PITCH_MAX); as setas andam como W A S D.
    Vista 2 = vista da sala: abaixo de ORBIT_MIN a câmera fica baixa e só inclina o olhar para
              cima (até PITCH_MIN), para ver as paredes, o teto e a lâmpada.
-   Vista 3 = primeira pessoa: a câmera fica na altura dos olhos da personagem (que some, para não
-             atrapalhar) e olha para onde o mouse aponta; camPitch positivo = olhar para baixo. */
+   Vista 3 = primeira pessoa: a câmera fica na altura dos olhos da personagem (o corpo não aparece para
+             a própria câmera, mas continua existindo e aparece no espelho) e olha para onde o mouse aponta; camPitch positivo = olhar para baixo. */
 var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.05;
 var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4, VIEW3_PITCH = 0;     /* inclinação ao trocar de vista */
 var EYE_Y = 8.0;                               /* altura dos olhos na vista 3 (a cabeça fica em y = 7,92) */
@@ -35,6 +35,10 @@ var VIEW_LABEL = canvas.getAttribute('aria-label');
 var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D (ou as setas) para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse para girar a câmera. As teclas 1, 2 e 3 trocam a vista; na vista 2, o mouse olha para cima, até o teto; a vista 3 é em primeira pessoa.';
 
 var HINT_PLAY = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · 1, 2 e 3 trocam a vista · F tela cheia · Esc para sair';
+/* camada 0 = a câmera do jogador vê; camada 1 = só o espelho vê (a câmera do espelho liga as duas, em sala.js) */
+function setBodyLayer(obj, layer) {
+  obj.traverse(function (o) { o.layers.set(layer); });
+}
 function setView(n) {
   camView = n;
   camPitch = n === 3 ? VIEW3_PITCH : (n === 2 ? VIEW2_PITCH : VIEW1_PITCH);
@@ -44,7 +48,7 @@ function setView(n) {
   document.getElementById('playHint').textContent = HINT_PLAY;
   camera.fov = n === 3 ? FOV_FIRST : FOV_ORBIT;     /* primeira pessoa precisa de um campo de visão mais aberto */
   camera.updateProjectionMatrix();
-  if (active && active.character) active.character.visible = n !== 3;   /* na primeira pessoa o corpo some */
+  if (active && active.character) setBodyLayer(active.character, n === 3 ? 1 : 0);   /* na primeira pessoa o corpo sai da camada que a câmera vê (o espelho continua vendo) */
 }
 function setPlayUI(on) {
   document.getElementById('viewerBtns').hidden = on;
@@ -94,6 +98,7 @@ function stopGame() {
   }
   var c = active.character;
   c.visible = true;
+  setBodyLayer(c, 0);
   camera.fov = FOV_ORBIT; camera.updateProjectionMatrix();
   rig.add(c);                                /* volta para o visualizador */
   c.rotation.set(0, 0, 0);

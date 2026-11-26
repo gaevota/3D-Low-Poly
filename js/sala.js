@@ -48,8 +48,9 @@ function wall(w, x, z, ry) {
   m.position.set(x, ROOM_H / 2, z);
   m.rotation.y = ry;
   room.add(m);
+  return m;
 }
-wall(ROOM_W, 0, -ROOM_D / 2, 0);
+var backWall = wall(ROOM_W, 0, -ROOM_D / 2, 0);
 wall(ROOM_W, 0, ROOM_D / 2, Math.PI);
 wall(ROOM_D, -ROOM_W / 2, 0, Math.PI / 2);
 wall(ROOM_D, ROOM_W / 2, 0, -Math.PI / 2);
@@ -88,6 +89,70 @@ wallSwitch.add(swPlate);
 var swLever = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.85, 0.22), M.switchLever);
 swLever.position.z = 0.1;
 wallSwitch.add(swLever);
+
+/* espelho (parede do fundo, no meio, de frente para quem começa o jogo): uma segunda câmera, refletida pelo plano do espelho,
+   desenha a sala numa textura (WebGLRenderTarget) e o espelho mostra essa textura. É o mesmo método do THREE.Reflector,
+   escrito aqui porque o three.js r128 usado pela página não traz o Reflector. A parede de trás do espelho some só
+   durante esse desenho (a câmera refletida fica atrás dela). O corpo da personagem, que a câmera em primeira pessoa
+   não vê (camada 1), aparece no espelho. */
+var MIRROR_W = 9, MIRROR_H = 12, MIRROR_Y = 8.5, MIRROR_TEX = 1536;
+var mirrorTarget = new THREE.WebGLRenderTarget(MIRROR_TEX, MIRROR_TEX, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+var mirrorCam = new THREE.PerspectiveCamera();
+mirrorCam.layers.enable(1);                 /* vê também a camada 1 (o corpo na vista de primeira pessoa) */
+var mirrorTexMatrix = new THREE.Matrix4();
+var mirror = new THREE.Mesh(
+  new THREE.PlaneGeometry(MIRROR_W, MIRROR_H),
+  new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: mirrorTarget.texture }, textureMatrix: { value: mirrorTexMatrix } },
+    vertexShader: 'uniform mat4 textureMatrix; varying vec4 vUv;' +
+      'void main() { vUv = textureMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; varying vec4 vUv;' +
+      'void main() { vec4 c = texture2DProj(tDiffuse, vUv); gl_FragColor = vec4(c.rgb * vec3(0.95, 0.97, 1.0), 1.0); }'
+  })
+);
+mirror.position.set(0, MIRROR_Y, -ROOM_D / 2 + 0.06);   /* de frente para +z, como a parede */
+room.add(mirror);
+M.mirrorFrame = mat(0x5a4636);
+(function () {
+  var t = 0.45, d = 0.3, z = -ROOM_D / 2 + 0.06 + d / 2 - 0.05;
+  room.add(box(MIRROR_W + 2 * t, t, d, M.mirrorFrame, 0, MIRROR_Y + MIRROR_H / 2 + t / 2, z));
+  room.add(box(MIRROR_W + 2 * t, t, d, M.mirrorFrame, 0, MIRROR_Y - MIRROR_H / 2 - t / 2, z));
+  room.add(box(t, MIRROR_H, d, M.mirrorFrame, -(MIRROR_W / 2 + t / 2), MIRROR_Y, z));
+  room.add(box(t, MIRROR_H, d, M.mirrorFrame, MIRROR_W / 2 + t / 2, MIRROR_Y, z));
+})();
+room.updateMatrixWorld(true);
+var mrN = new THREE.Vector3(), mrP = new THREE.Vector3(), mrC = new THREE.Vector3(), mrV = new THREE.Vector3(), mrT = new THREE.Vector3();
+var mrLook = new THREE.Vector3(), mrRot = new THREE.Matrix4(), mrPV = new THREE.Matrix4(), mrFrustum = new THREE.Frustum();
+function renderMirror() {
+  camera.updateMatrixWorld();
+  mrPV.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  mrFrustum.setFromProjectionMatrix(mrPV);
+  if (!mrFrustum.intersectsObject(mirror)) return;          /* espelho fora da tela: não gasta tempo desenhando */
+  mrP.setFromMatrixPosition(mirror.matrixWorld);
+  mrC.setFromMatrixPosition(camera.matrixWorld);
+  mrRot.extractRotation(mirror.matrixWorld);
+  mrN.set(0, 0, 1).applyMatrix4(mrRot);
+  mrV.subVectors(mrP, mrC);
+  if (mrV.dot(mrN) > 0) return;                              /* câmera atrás do espelho */
+  mrV.reflect(mrN).negate().add(mrP);                        /* posição da câmera refletida */
+  mrRot.extractRotation(camera.matrixWorld);
+  mrLook.set(0, 0, -1).applyMatrix4(mrRot).add(mrC);
+  mrT.subVectors(mrP, mrLook).reflect(mrN).negate().add(mrP);   /* ponto para onde a câmera refletida olha */
+  mirrorCam.position.copy(mrV);
+  mirrorCam.up.set(0, 1, 0).applyMatrix4(mrRot).reflect(mrN);
+  mirrorCam.lookAt(mrT);
+  mirrorCam.far = camera.far;
+  mirrorCam.updateMatrixWorld();
+  mirrorCam.projectionMatrix.copy(camera.projectionMatrix);
+  mirrorTexMatrix.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
+  mirrorTexMatrix.multiply(mirrorCam.projectionMatrix).multiply(mirrorCam.matrixWorldInverse).multiply(mirror.matrixWorld);
+  mirror.visible = false; backWall.visible = false;
+  var prev = renderer.getRenderTarget();
+  renderer.setRenderTarget(mirrorTarget);
+  renderer.render(scene, mirrorCam);
+  renderer.setRenderTarget(prev);
+  mirror.visible = true; backWall.visible = true;
+}
 
 /* luz da sala: liga/desliga a lâmpada (a luz ambiente fica bem fraca para a sala não sumir por completo) */
 var lightOn = true;
