@@ -15,7 +15,7 @@
    Cores de tudo                           → paleta C  (e cores do fundo em R())
    Cozinha (piso, parede, geladeira...)    → kitchenRoom()
    Micro-ondas (corpo, porta, painel)      → microwave()
-   Menino                                  → boy()
+   Personagem (o do site)                  → personagem()  (corpo: personagem-site.js)
    Tigela de lámen                         → ramen()
    Molécula de água                        → water()
    Garfo e faíscas                         → fork(), sparks()
@@ -139,27 +139,31 @@ function tube(pts,r,seg){const m=mk();const rings=[];for(let i=0;i<pts.length;i+
 //   SP = esfera     SP(malha, cor, x,y,z, sx,sy,sz, opções)
 // Opções: a=opacidade, e=brilho próprio, u=sem sombreamento, s=brilho especular.
 const cv=document.getElementById('c');const gl=cv.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:true,preserveDrawingBuffer:true});const RS=1.5;cv.width=720*RS;cv.height=1280*RS;
-const VS=`attribute vec3 p;attribute vec3 n;uniform mat4 uVP,uM;uniform mat3 uN;varying vec3 vN,vW;
-void main(){vec4 w=uM*vec4(p,1.);vW=w.xyz;vN=uN*n;gl_Position=uVP*w;}`;
-const FS=`precision mediump float;varying vec3 vN,vW;uniform vec3 uCol,uEye,uSky,uGnd;uniform float uA,uE,uU,uS;
+// k = tom por vértice (multiplica a cor). Todas as malhas comuns têm k = 1,1,1; só o cabelo do personagem usa tons diferentes por faceta.
+const VS=`attribute vec3 p;attribute vec3 n;attribute vec3 k;uniform mat4 uVP,uM;uniform mat3 uN;varying vec3 vN,vW,vK;
+void main(){vec4 w=uM*vec4(p,1.);vW=w.xyz;vN=uN*n;vK=k;gl_Position=uVP*w;}`;
+const FS=`precision mediump float;varying vec3 vN,vW,vK;uniform vec3 uCol,uEye,uSky,uGnd;uniform float uA,uE,uU,uS;
 void main(){vec3 N=normalize(vN);vec3 V=normalize(uEye-vW);if(dot(N,V)<0.)N=-N;
+vec3 uC=uCol*vK;
 vec3 L=normalize(vec3(-.45,.85,.55));float d=max(dot(N,L),0.);float h=.5+.5*N.y;
-vec3 amb=mix(uGnd,uSky,h);vec3 lit=uCol*(amb*.82+vec3(1.,.96,.9)*d*.72);
+vec3 amb=mix(uGnd,uSky,h);vec3 lit=uC*(amb*.82+vec3(1.,.96,.9)*d*.72);
 vec3 H=normalize(L+V);float sp=pow(max(dot(N,H),0.),38.)*uS;
 float fr=pow(1.-max(dot(N,V),0.),3.);
-vec3 c=mix(lit,uCol,uU)+uCol*uE+vec3(sp)+vec3(fr*.08*uS);
+vec3 c=mix(lit,uC,uU)+uC*uE+vec3(sp)+vec3(fr*.08*uS);
 gl_FragColor=vec4(c*uA,uA);}`;
 function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(x);return x}
 const prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);gl.useProgram(prog);
 const U={};for(const k of['uVP','uM','uN','uCol','uEye','uSky','uGnd','uA','uE','uU','uS'])U[k]=gl.getUniformLocation(prog,k);
-const aP=gl.getAttribLocation(prog,'p'),aN=gl.getAttribLocation(prog,'n');gl.enableVertexAttribArray(aP);gl.enableVertexAttribArray(aN);
-function upload(m){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(m.v),gl.STATIC_DRAW);return{b,n:m.v.length/6}}
+const aP=gl.getAttribLocation(prog,'p'),aN=gl.getAttribLocation(prog,'n'),aK=gl.getAttribLocation(prog,'k');gl.enableVertexAttribArray(aP);gl.enableVertexAttribArray(aN);gl.enableVertexAttribArray(aK);
+// upload(m): m.v = posição+normal (6 números por vértice); m.c (opcional) = tom por vértice (3 números por vértice). Sem m.c o tom é 1,1,1.
+function upload(m){const nv=m.v.length/6,a=new Float32Array(nv*9);for(let i=0;i<nv;i++){for(let j=0;j<6;j++)a[i*9+j]=m.v[i*6+j];for(let j=0;j<3;j++)a[i*9+6+j]=m.c?m.c[i*3+j]:1}
+ const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,a,gl.STATIC_DRAW);return{b,n:nv}}
 const MESH={box:upload(box()),cyl:upload(cyl(14)),cyl8:upload(cyl(8)),cylT:upload(cyl(16,1.14)),cone:upload(cyl(12,0)),sph:upload(ico(1,false)),sphS:upload(ico(3,true)),sph0:upload(ico(0,false)),
  drop:upload(lathe([[0,-1],[.55,-.62],[.92,-.12],[.62,.5],[.0,1.35]].map(a=>[a[0],a[1]]),10,true)),
  bowlO:upload(lathe([[0,0],[.36,0],[.42,.02],[.70,.3],[.88,.62],[.92,.67]],30,false)),
  bowlI:upload(lathe([[.86,.67],[.84,.62],[.66,.3],[.3,.12],[0,.1]],30,false))};
 let VP,EYE,SKY=[.85,.82,.78],GND=[.55,.5,.46];
-function D(mesh,M,col,o){o=o||{};const m=MESH[mesh];gl.bindBuffer(gl.ARRAY_BUFFER,m.b);gl.vertexAttribPointer(aP,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aN,3,gl.FLOAT,false,24,12);
+function D(mesh,M,col,o){o=o||{};const m=MESH[mesh];gl.bindBuffer(gl.ARRAY_BUFFER,m.b);gl.vertexAttribPointer(aP,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(aN,3,gl.FLOAT,false,36,12);gl.vertexAttribPointer(aK,3,gl.FLOAT,false,36,24);
  const a=o.a===undefined?1:o.a;if(a<=.001)return;gl.depthMask(a>=.99||o.dw);
  gl.uniformMatrix4fv(U.uVP,false,VP);gl.uniformMatrix4fv(U.uM,false,M);gl.uniformMatrix3fv(U.uN,false,normMat(M));
  gl.uniform3fv(U.uCol,col);gl.uniform3fv(U.uEye,EYE);gl.uniform3fv(U.uSky,SKY);gl.uniform3fv(U.uGnd,GND);
@@ -185,28 +189,64 @@ const C={cream:[.95,.93,.88],metal:[.78,.81,.85],metalD:[.55,.58,.63],wood:[.82,
  yolk:[1,.76,.1],noodle:[.98,.83,.38],broth:[.52,.25,.08],green:[.3,.75,.3],drop:[.28,.68,1],orange:[1,.5,.12],glass:[.35,.45,.55],
  brown:[.5,.28,.14],bread:[.86,.55,.25],cookie:[.9,.7,.4],choc:[.27,.14,.08],silver:[.82,.84,.88],gold:[.9,.7,.25]};
 
-// ================= [5] PERSONAGEM E OBJETOS: boy(), ramen(), droplet() =================
-function boy(x,y,z,s,t,o){o=o||{};const b=(...m)=>tf(T(x,y,z),RY(o.ry||0),S(s,s,s),...m);const bob=Math.sin(t*3.2)*.015+Math.abs(Math.sin(o.ph||0))*.03*(o.walk||0);
- const aR=o.armR??.12+Math.sin(t*3)*.03, aL=o.armL??.12-Math.sin(t*3)*.03;
- // SAPATO: S(largura,altura,comprimento) um pouco maior e recuado (z=.05) para cobrir a base da perna; a perna começa em y=.10.
- // ANDAR: o.walk (0 a 1) = quanto ele anda; o.ph = fase do passo (ex.: t*9). Cada perna gira no quadril (y=.8), uma em oposição à outra.
- for(const sx of[-1,1]){const sw=Math.sin((o.ph||0)+(sx>0?Math.PI:0))*.55*(o.walk||0);const lg=b(T(sx*.13,.8,0),RX(sw));
-  D('cyl',tf(lg,T(0,-.34,0),S(.1,.72,.1)),C.navy,{s:.15});D('sphS',tf(lg,T(0,-.71,.05),S(.13,.095,.22)),[.96,.96,.97],{s:.3})}
- // SOMBRA ÚNICA do menino (acompanha a rotação dele). T(x,...) desloca: negativo = pé esquerdo (sx=-1), positivo = pé direito.
- // S(largura,fina,profundidade) controla o tamanho. A opacidade é a:.18.
- D('cyl',b(T(0,.004,.03),S(.5,.002,.35)),[0,0,0],{a:.18,u:1,dw:false});
- D('cyl',b(T(0,.82,0),S(.3,.2,.2)),C.navy,{s:.15});
- D('cylT',b(T(0,1.18+bob,0),S(.25,.56,.19)),C.blue,{s:.3});
- D('cyl',b(T(0,1.52+bob,0),S(.075,.12,.075)),C.skin);
- for(const [sx,ang] of[[-1,aL],[1,aR]]){const piv=b(T(sx*.32,1.4+bob,0),RZ(sx*ang));
-  D('cyl',tf(piv,T(0,-.26,0),S(.075,.52,.075)),C.blue,{s:.3});D('sphS',tf(piv,T(0,-.52,0),S(.078,.078,.078)),C.blue);
-  D('sphS',tf(piv,T(0,-.6,0),S(.085,.085,.085)),C.skin)}
- const hx=Math.sin(t*1.6)*.04;
- D('sphS',b(T(hx,1.84+bob,0),S(.36,.36,.36)),C.skin,{s:.2});
- D('sphS',b(T(hx,1.92+bob,-.045),S(.38,.38,.38)),C.hair,{s:.4});
- for(const sx of[-1,1]){D('sphS',b(T(hx+sx*.37,1.82+bob,0),S(.06,.08,.045)),C.skin);D('sph',b(T(hx+sx*.13,1.82+bob,.345),S(.045,.06,.03)),C.dark,{u:1});D('box',b(T(hx+sx*.13,1.89+bob,.35),RZ(sx*-.15),S(.1,.018,.015)),C.hair,{u:1})}
- D('box',b(T(hx,1.71+bob,.335),S(.1,.022,.03)),[.55,.25,.22],{u:1});
- return b}
+// ================= [5] PERSONAGEM E OBJETOS: personagem(), ramen(), droplet() =================
+// personagem(x,y,z,s,t,o) = o personagem da página principal (Personagem 1: cabelo 1, camiseta e shorts, cores padrão do site).
+//   x,y,z = onde ficam os PÉS (y = chão)    s = tamanho (a altura é a do antigo menino do episódio, ≈ 2,02·s)    t = tempo (s)
+//   o.ry   = para onde olha (0 = de frente para o espectador; gira em torno do eixo y)
+//   o.armR / o.armL = ângulo dos braços (.12 = braço baixo; ≈ 2,6 = braço levantado, acenando)
+//   o.walk (0 a 1) = quanto ele anda      o.ph = fase do passo (ex.: t*9)
+// O corpo vem de personagem-site.js (cópia do código do site, em three.js). Aqui, na primeira vez, cada peça dele é
+// convertida para uma malha do motor 3D do episódio; depois, a cada quadro, só se põe a pose (a mesma de js/animacao.js
+// do site: braços, mão que acena, pernas e pés) e se desenha cada peça. Para mudar roupa, cabelo ou cor: ch.setOutfit(...),
+// ch.setHair(...), PersonagemSite.setPartColor(ch,'shirt','#...') — aqui em PERS, antes do traverse.
+const PERS=(()=>{
+ if(!window.PersonagemSite){console.warn('personagem-site.js / three.js não carregou: o episódio abre sem o personagem');return null}
+ const ch=PersonagemSite.createCharacter(0);
+ ch.character.position.set(0,0,0);ch.character.updateMatrixWorld(true);
+ const visivel=o=>{for(;o;o=o.parent)if(!o.visible)return false;return true};
+ const pecas=[];let ymin=1e9,ymax=-1e9;
+ ch.character.traverse(o=>{
+  if(!o.isMesh||!visivel(o))return;                       // peças escondidas (outras roupas e cabelos) ficam de fora
+  let g=o.geometry;if(g.index)g=g.toNonIndexed();
+  const P=g.attributes.position.array,N=g.attributes.normal&&g.attributes.normal.array,K=g.attributes.color&&g.attributes.color.array;
+  const liso=o.material.flatShading===false&&!!N;         // cabeça, orelhas e mãos são lisas; o resto é facetado
+  const v=[],c=K?[]:null,e=o.matrixWorld.elements;
+  for(let i=0;i<P.length/9;i++){const q=i*9;
+   const ux=P[q+3]-P[q],uy=P[q+4]-P[q+1],uz=P[q+5]-P[q+2],wx=P[q+6]-P[q],wy=P[q+7]-P[q+1],wz=P[q+8]-P[q+2];
+   let nx=uy*wz-uz*wy,ny=uz*wx-ux*wz,nz=ux*wy-uy*wx;const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;
+   for(let j=0;j<3;j++){const a=q+j*3;
+    v.push(P[a],P[a+1],P[a+2],...(liso?[N[a],N[a+1],N[a+2]]:[nx,ny,nz]));
+    if(K)c.push(K[a],K[a+1],K[a+2]);
+    const y2=e[1]*P[a]+e[5]*P[a+1]+e[9]*P[a+2]+e[13];ymin=Math.min(ymin,y2);ymax=Math.max(ymax,y2)}}
+  const nome='pers'+pecas.length;MESH[nome]=upload({v,c});
+  const cor=o.material.color,aceso=o.material.emissive&&o.material.emissive.getHex()>0;   // brilho do olho = sem sombreamento
+  pecas.push({nome,obj:o,cor:aceso?[1,1,1]:[cor.r,cor.g,cor.b],op:aceso?{u:1}:{s:.12}});
+ });
+ return{ch,pecas,k:2.02/(ymax-ymin),y0:-ymin};
+})();
+// Altura que o corpo sobe para o ponto mais baixo da sola ficar no chão (é a footLift() de js/animacao.js, sem a inclinação de correr).
+const FOOT_PITCH=.5;
+function pesNoChao(ch){let minY=0;
+ for(const l of ch.legs){const th=l.g.rotation.x,ph=l.shoe?l.shoe.rotation.x:0,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph);
+  for(const z of[-.38,1.3]){const Y=.7-.7*cp-z*sp-4,Z=-.7*sp+z*cp;const y2=4+Y*ct-Z*st;if(y2<minY)minY=y2}}
+ return-minY}
+function personagem(x,y,z,s,t,o){o=o||{};if(!PERS)return;
+ const{ch,pecas,k}=PERS,walk=o.walk||0,sw=Math.sin(o.ph||0)*walk;
+ // ---- pose (igual à do site) ----
+ const aR=(o.armR===undefined?.12+Math.sin(t*3)*.03:o.armR)-.12,aL=(o.armL===undefined?.12-Math.sin(t*3)*.03:o.armL)-.12;
+ const up=clamp(aR/2.4);                                    // 0 = braço baixo, 1 = braço direito acenando
+ ch.armRG.rotation.z=aR;ch.armLG.rotation.z=-aL;
+ ch.hand1.quaternion.setFromAxisAngle(ch.handUp,up*Math.PI/2).multiply(ch.handBaseQ);
+ ch.hand1.position.x=ch.handX+.03*(1-up);                   // na hora de acenar a mão fica centrada no antebraço
+ for(const l of ch.legs){l.g.rotation.x=l.s*sw*.35;l.shoe.rotation.x=-FOOT_PITCH*l.g.rotation.x}
+ ch.armLG.rotation.x=sw*.4;ch.armRG.rotation.x=up>.05?0:-sw*.4;
+ ch.character.position.y=PERS.y0+pesNoChao(ch);
+ ch.character.updateMatrixWorld(true);
+ // ---- desenho ----
+ const base=tf(T(x,y,z),RY(o.ry||0),S(s*k,s*k,s*k));
+ D('cyl',tf(T(x,y,z),RY(o.ry||0),S(s,s,s),T(0,.004,.08),S(.5,.002,.35)),[0,0,0],{a:.18,u:1,dw:false});   // sombra no chão
+ for(const p of pecas)D(p.nome,M4.mul(base,p.obj.matrixWorld.elements),p.cor,p.op);
+}
 function ramen(t,spin,o){o=o||{};const a=o.a===undefined?1:o.a;const base=tf(T(o.x,o.y,o.z),S(o.s,o.s,o.s));
  D('bowlO',base,[1,1,.98],{s:.5,e:.25});D('bowlI',base,[1,.98,.94],{s:.4,e:.2});
  const inner=tf(base,RY(spin));
@@ -371,7 +411,7 @@ const pop=(t,t0,t1)=>{const entrada=clamp((t-t0)/.3),saida=clamp((t1-t)/.2);cons
 
 // ================= [10] CENAS 7-13 (28s → 1:11) =================
 // water() = molécula; molScene() = cenas 7, 8 e 9; fork()/sparks() = garfo; kitchen() = cenas 10 a 13.
-// Dentro de kitchen(): sc 10 = garfo, 11 = prato giratório, 12 = radioatividade, 13 = final com o menino.
+// Dentro de kitchen(): sc 10 = garfo, 11 = prato giratório, 12 = radioatividade, 13 = final com o personagem.
 const xf=(M,p)=>[M[0]*p[0]+M[4]*p[1]+M[8]*p[2]+M[12],M[1]*p[0]+M[5]*p[1]+M[9]*p[2]+M[13],M[2]*p[0]+M[6]*p[1]+M[10]*p[2]+M[14]];
 const HOTC=[1,.5,.12],HOTH=[1,.78,.25];
 const hotDrop=f=>[lerp(C.drop[0],1,f),lerp(C.drop[1],.38,f),lerp(C.drop[2],.1,f)];
@@ -432,7 +472,7 @@ function kitchen(t,sc){
   microwave({topA:1,door:0,doorA:1,panelOff:0,panelA:1,elec:false,glowMag:0,spin:0,pane:0});
   const FX=1.5,inx=FX+(BX+3.5-FX)*(1-sm((t-at(13,0.07))/1.1));
   const up=sm((t-at(13,1.37))/.5);const bo={ry:lerp(-1.75,.06,sm((t-at(13,0.77))/.6)),armR:.12+2.48*up+Math.sin(t*7)*.28*up,armL:.12,walk:clamp((at(13,1.17)-t)/.3),ph:t*9};
-  boy(inx,FLR,BZ,BSC,t,bo);
+  personagem(inx,FLR,BZ,BSC,t,bo);
   return}
  const glow=.6+.4*Math.sin(t*7);
  microwave({topA:0,door:0,doorA:0,panelOff:1,panelA:0,elec:true,glowMag:glow*(sc===12?.4:1),spin:t*.9,pane:1});
@@ -459,7 +499,7 @@ function kitchen(t,sc){
 }
 
 // ================= [11] COZINHA (cenário de fundo): kitchenRoom() =================
-// BX, FLR, BSC, BZ = posição inicial, altura do piso, escala e profundidade do menino.
+// BX, FLR, BSC, BZ = posição inicial, altura do piso, escala e profundidade do personagem.
 const BX=3.3,FLR=-3.0,BSC=2.2,BZ=5.4;
 function plate(x,y,z,r){D('cyl8',tf(T(x,y,z),S(r,.07,r)),[.97,.97,.95],{s:.4});D('cyl8',tf(T(x,y+.04,z),S(r*.68,.05,r*.68)),[.88,.92,.97],{s:.3})}
 function kitchenRoom(t){
@@ -496,7 +536,7 @@ function kitchenRoom(t){
  for(let k=0;k<7;k++){const g=k*.1;B([.35,.2,.05],-.1,.008+k*.0004,-.05,4.4+g*1.6,.004,3.2+g*1.6,{a:.045,u:1,dw:false})}
 }
 
-// ----- CENAS 1-4: micro-ondas por dentro, menino e ondas -----
+// ----- CENAS 1-4: micro-ondas por dentro, personagem e ondas -----
 function drawMicrowave(t,sc){
   const topA=t<at(2,0.2)?1:t<at(2,0.7)?1-(t-at(2,0.2))/.5:0;
   const door=t<at(2)?0:t<at(2,1.15)?Math.PI*.58*sm((t-at(2))/1.1):Math.PI*.58;
@@ -509,11 +549,12 @@ function drawMicrowave(t,sc){
   ramen(t,t*.6,RAMEN_POS);
   if(t>=T_WAVES&&sc<=4){waves(t,sc===4?.35:1)}
   if(sc>=3)steam(t,-.6,.9,.1,sc===4?.7:.3);
-  // boy
+  // personagem
   if(t<at(3)){const out=sm((t-at(2,4.55))/1.0);const wv=t>at(2,0.4)&&t<at(2,5.05);
    const o={ry:-1.75,armR:wv?2.5+Math.sin(t*5)*.22:.12,armL:.12};
    const wk=sm((t-at(2,0.15))/.9),bx=lerp(BX,4.7,wk)+out*3.5,bz=lerp(BZ,.5,wk);o.ry=lerp(-1.75,-1.3,wk);
-   const bm=boy(bx,FLR,bz,BSC,t,o);
+   const andando=(wk>0&&wk<1)||(out>0&&out<1);o.walk=andando?1:0;o.ph=t*9;   // anda (pernas e braços) enquanto se desloca
+   personagem(bx,FLR,bz,BSC,t,o);
    const hp=toScreen([bx,1.9,bz]);bubble.style.left=hp[0]+'px';bubble.style.top=hp[1]+'px';const bo=clamp((t-at(1,0.3))/.3)*clamp((at(2,0.55)-t)/.3);bubble.style.opacity=bo;bubble.style.transform=`translate(-50%,-50%) scale(${.6+.4*bo})`;}
   else bubble.style.opacity=0;
   if(sc===4||t>=at(4,0.29)){ // water droplets rising from the bowl

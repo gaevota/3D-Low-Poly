@@ -22,6 +22,9 @@
 <audio id="au"></audio>
 </div>
 <div id="narPanel"><div id="narBar"><button id="nPlay">▶ Reproduzir</button><span id="nTc">0:00</span><input type="text" id="nQ" placeholder="🔎 buscar na narração..."><label style="font-size:.9rem"><input type="checkbox" id="nFollow" checked> acompanhar</label><button id="nCopy">📋 Copiar texto</button></div><div id="narList"></div></div>
+<!-- three.js (mesma versão da página principal) + o personagem do site: só são usados para montar o personagem; o desenho é do motor 3D do episódio -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="personagem-site.js"></script>
 <!-- a narração (window.CUES) vem primeiro; episodio.js usa ela -->
 <script src="narracao.js"></script>
 <script src="episodio.js"></script>
