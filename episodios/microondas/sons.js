@@ -24,8 +24,10 @@
     return a;
   });
   var ultimo = -1;
+  var escolhido = 0;   /* 0 = misturado; 1 a 4 = sempre o mesmo arquivo (passo-N.mp3) */
   window.tocarPasso = function () {
-    var i = (ultimo + 1 + Math.floor(Math.random() * (passos.length - 1))) % passos.length;
+    var i = escolhido ? escolhido - 1
+      : (ultimo + 1 + Math.floor(Math.random() * (passos.length - 1))) % passos.length;
     ultimo = i;
     var s = passos[i].cloneNode(true);
     s.volume = PASSO_VOL;
@@ -34,9 +36,24 @@
     if (p && p.catch) p.catch(function () {});
   };
 
+  /* botões "Som do passo": escolhem o som usado no vídeo e tocam três passadas, no ritmo da caminhada, para ouvir como fica */
+  var amostra = [];
+  var botoesPasso = document.querySelectorAll('#passoOpts button');
+  Array.prototype.forEach.call(botoesPasso, function (b) {
+    b.addEventListener('click', function () {
+      escolhido = Number(b.getAttribute('data-passo'));
+      Array.prototype.forEach.call(botoesPasso, function (o) {
+        o.classList.toggle('on', o === b);
+        o.setAttribute('aria-pressed', String(o === b));
+      });
+      amostra.forEach(clearTimeout);   /* trocar rápido de opção cancela a amostra anterior */
+      amostra = [0, 350, 700].map(function (ms) { return setTimeout(window.tocarPasso, ms); });
+    });
+  });
+
   document.addEventListener('click', function (e) {
     var el = e.target.closest && e.target.closest('button, a[href]');
-    if (!el) return;
+    if (!el || el.hasAttribute('data-passo')) return;   /* nesses, só o som do passo, sem o clique por cima */
     tocar();
     /* link: uma espera bem curta antes de trocar de página deixa o som começar a tocar.
        Cliques que abrem em outra aba (Ctrl, Cmd, Shift, Alt) seguem o comportamento normal. */

@@ -29,6 +29,8 @@ button:hover{border-color:#b9a6e8}button.on{background:#f3ece4;color:#14111f}
 #scenesTitle{font-weight:700;font-size:1rem;opacity:.9;text-align:left}
 #scenesTitle span{font-weight:400;opacity:.7}
 #opts{font-size:.9rem;opacity:.85;gap:12px 24px}
+#passoOpts{font-size:.9rem}
+#passoOpts button{min-width:42px}
 @media (min-width:1150px){
   #ep{gap:28px}
   #side{width:min(100% - 48px,1100px);gap:32px}
@@ -43,6 +45,7 @@ button:hover{border-color:#b9a6e8}button.on{background:#f3ece4;color:#14111f}
   #scenes{justify-content:flex-start;gap:8px}
   #scenes button{min-width:46px;height:46px;padding:0 8px}
   #opts{justify-content:space-between}
+  #passoOpts{justify-content:flex-start}
   #narPanel{width:min(100%,1100px)}
 }
 /* ================= ESTILO DO PALCO DO VÍDEO (720x1280, escalado por JS) =================
