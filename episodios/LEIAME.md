@@ -6,11 +6,13 @@ Cada episódio é uma pasta própria, com HTML, CSS e JS separados:
     episodios/
       index.html, episodios.css, episodios.js   a página com a lista (não precisa mexer)
       lista.js                                  a lista de episódios (é aqui que se acrescenta um)
+      sons.js                                   som dos cliques na lista
       microondas/                               episódio 1
         index.html     a página do episódio
         estilo.css     estilo
         narracao.js    a narração (window.CUES): texto e tempo de cada frase
         episodio.js    cenas, câmera, motor 3D e player
+        sons.js        som dos botões (usa audio/botoes.mp3 da página principal)
         personagem-site.js  cópia do personagem da página principal (three.js), usada pelo episódio
 
 ## Como acrescentar um episódio
