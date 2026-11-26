@@ -10,15 +10,19 @@ var WALK_SPEED = 8, RUN_SPEED = 15;
 var pl = { x: 0, y: 0, vy: 0, z: 8, face: Math.PI };   /* posição, altura do pulo e direção que a personagem olha */
 var JUMP_V = 16, GRAVITY = 42;            /* pulo de cerca de 3 unidades de altura, ~0,76 s no ar */
 var camYaw = 0, camPitch = 0.4;
-/* Duas vistas (teclas 1 e 2 ou botões):
+/* Três vistas (teclas 1, 2 e 3 ou botões):
    Vista 1 = câmera em terceira pessoa de antes: orbita a personagem sempre olhando para ela
              (camPitch de ORBIT_MIN até PITCH_MAX); as setas andam como W A S D.
    Vista 2 = vista da sala: abaixo de ORBIT_MIN a câmera fica baixa e só inclina o olhar para
-             cima (até PITCH_MIN), para ver as paredes, o teto e a lâmpada. */
+             cima (até PITCH_MIN), para ver as paredes, o teto e a lâmpada.
+   Vista 3 = primeira pessoa: a câmera fica na altura dos olhos da personagem (que some, para não
+             atrapalhar) e olha para onde o mouse aponta; camPitch positivo = olhar para baixo. */
 var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.05;
-var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4;     /* inclinação ao trocar de vista */
+var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4, VIEW3_PITCH = 0;     /* inclinação ao trocar de vista */
+var EYE_Y = 8.0;                               /* altura dos olhos na vista 3 (a cabeça fica em y = 7,92) */
+var FOV_ORBIT = 35, FOV_FIRST = 75;            /* campo de visão: vistas 1 e 2 / vista 3 (primeira pessoa) */
 var camView = 1;
-function pitchMin() { return camView === 2 ? PITCH_MIN : ORBIT_MIN; }
+function pitchMin() { return camView === 1 ? ORBIT_MIN : PITCH_MIN; }
 var keys = {}, moving = false, sprint = false;
 var MOVE_KEYS = {
   KeyW: 1, KeyA: 1, KeyS: 1, KeyD: 1,
@@ -28,16 +32,19 @@ var MOVE_KEYS = {
 var menu = document.getElementById('menuJogo');
 var btnPlay = document.getElementById('btnPlay');
 var VIEW_LABEL = canvas.getAttribute('aria-label');
-var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D (ou as setas) para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse para girar a câmera. As teclas 1 e 2 trocam a vista; na vista 2, o mouse olha para cima, até o teto.';
+var PLAY_LABEL = 'Sala vazia em 3D. Use as teclas W, A, S e D (ou as setas) para andar com a personagem, Shift para correr, Espaço para pular. Arraste o mouse para girar a câmera. As teclas 1, 2 e 3 trocam a vista; na vista 2, o mouse olha para cima, até o teto; a vista 3 é em primeira pessoa.';
 
-var HINT_V1 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
-var HINT_V2 = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · 1 e 2 trocam a vista · F tela cheia · Esc para sair';
+var HINT_PLAY = 'W A S D (ou setas) para andar · Shift para correr · Espaço para pular · 1, 2 e 3 trocam a vista · F tela cheia · Esc para sair';
 function setView(n) {
   camView = n;
-  camPitch = n === 2 ? VIEW2_PITCH : VIEW1_PITCH;
+  camPitch = n === 3 ? VIEW3_PITCH : (n === 2 ? VIEW2_PITCH : VIEW1_PITCH);
   document.getElementById('btnView1').setAttribute('aria-pressed', n === 1 ? 'true' : 'false');
   document.getElementById('btnView2').setAttribute('aria-pressed', n === 2 ? 'true' : 'false');
-  document.getElementById('playHint').textContent = n === 2 ? HINT_V2 : HINT_V1;
+  document.getElementById('btnView3').setAttribute('aria-pressed', n === 3 ? 'true' : 'false');
+  document.getElementById('playHint').textContent = HINT_PLAY;
+  camera.fov = n === 3 ? FOV_FIRST : FOV_ORBIT;     /* primeira pessoa precisa de um campo de visão mais aberto */
+  camera.updateProjectionMatrix();
+  if (active && active.character) active.character.visible = n !== 3;   /* na primeira pessoa o corpo some */
 }
 function setPlayUI(on) {
   document.getElementById('viewerBtns').hidden = on;
@@ -86,6 +93,8 @@ function stopGame() {
     setFull(false);
   }
   var c = active.character;
+  c.visible = true;
+  camera.fov = FOV_ORBIT; camera.updateProjectionMatrix();
   rig.add(c);                                /* volta para o visualizador */
   c.rotation.set(0, 0, 0);
   c.rotation.order = 'XYZ';
@@ -171,6 +180,7 @@ document.addEventListener('webkitfullscreenchange', onFsChange);
 
 document.getElementById('btnView1').addEventListener('click', function () { setView(1); canvas.focus(); });
 document.getElementById('btnView2').addEventListener('click', function () { setView(2); canvas.focus(); });
+document.getElementById('btnView3').addEventListener('click', function () { setView(3); canvas.focus(); });
 
 btnPlay.addEventListener('click', openMenu);
 document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);
@@ -189,6 +199,7 @@ window.addEventListener('keydown', function (e) {
   if (!playing || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === 'Digit1' || e.code === 'Numpad1') { setView(1); e.preventDefault(); return; }
   if (e.code === 'Digit2' || e.code === 'Numpad2') { setView(2); e.preventDefault(); return; }
+  if (e.code === 'Digit3' || e.code === 'Numpad3') { setView(3); e.preventDefault(); return; }
   if (e.code === 'KeyF') {
     if (!e.repeat) toggleFullscreen();
     e.preventDefault();
@@ -229,8 +240,15 @@ function updatePlay(dt) {
   var diff = Math.atan2(Math.sin(target - pl.face), Math.cos(target - pl.face));
   pl.face += diff * Math.min(1, dt * 12);
 }
-/* câmera em terceira pessoa: orbita a personagem e nunca sai da sala */
+/* câmera do jogo: vistas 1 e 2 orbitam a personagem (terceira pessoa); a vista 3 é em primeira pessoa */
 function applyPlayCamera() {
+  if (camView === 3) {                               /* primeira pessoa: nos olhos, olhando para onde camYaw/camPitch apontam */
+    var ex = clamp(pl.x, -(ROOM_W / 2 - 0.6), ROOM_W / 2 - 0.6);
+    var ez = clamp(pl.z, -(ROOM_D / 2 - 0.6), ROOM_D / 2 - 0.6);
+    camera.position.set(ex, EYE_Y + pl.y, ez);
+    camera.rotation.set(-camPitch, camYaw, 0, 'YXZ');   /* yaw 0 olha para -z, como W andando para frente */
+    return;
+  }
   var dist = 22 * zoomCur;
   var orbit = Math.max(camPitch, ORBIT_MIN);
   var lookUp = Math.max(0, ORBIT_MIN - camPitch);   /* quanto inclinar o olhar para cima */
