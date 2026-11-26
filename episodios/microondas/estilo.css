@@ -2,13 +2,34 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Baloo 2','Comic Sans MS',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px}
 h1{margin:4px 0 0;font-size:1.3rem;text-align:center}
-.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;width:max(var(--w),min(96vw,560px))}
+/* controles abaixo do vídeo: tempo + botões, cenas e opções, todos com a mesma largura */
+#player,.box{width:max(var(--w),min(96vw,560px));max-width:100%}
+#player{display:flex;flex-direction:column;gap:10px}
+#timeline{display:flex;align-items:center;gap:12px}
+#tc{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:6.2em;text-align:right}
+#bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#bPlay{min-width:9.5em}
+.box{background:#1c1830;border-radius:18px;padding:12px 16px}
+.box-title{font-weight:700;margin-bottom:10px;text-align:center}
+.box-title span{font-weight:400;opacity:.7}
+#scenes{display:grid;grid-template-columns:repeat(7,40px);gap:8px;justify-content:center}
+#scenes button{width:40px;height:40px;padding:0}
+#opts{display:flex;flex-direction:column;font-size:.95rem}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;flex-wrap:wrap;padding:6px 0}
+.opt+.opt{border-top:1px solid #4b426066}
+.opt label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+#capOn{accent-color:#b9a6e8;width:16px;height:16px;margin:0}
+#af{font:inherit;font-size:.85rem;min-width:0;max-width:100%}
+#af::file-selector-button{font:inherit;font-weight:700;color:var(--ink);background:var(--btn);border:2px solid #4b4260;border-radius:999px;padding:3px 12px;margin-right:8px;cursor:pointer}
+#off{width:90px;font:inherit;font-weight:700;color:var(--ink);background:var(--btn);border:2px solid #4b4260;border-radius:999px;padding:3px 12px}
+/* celular: os quatro botões numa linha só e cenas um pouco menores */
+@media (max-width:480px){#bar{gap:6px;flex-wrap:nowrap;font-size:.9rem}#bar button{padding:5px 10px}#bPlay{min-width:8.5em}.box{padding:12px 10px}#scenes{grid-template-columns:repeat(7,36px);gap:6px}#scenes button{width:36px;height:36px}}
 button{font:inherit;font-weight:700;color:var(--ink);background:var(--btn);border:2px solid #4b4260;border-radius:999px;padding:5px 15px;cursor:pointer}
 button:hover{border-color:#b9a6e8}button.on{background:#f3ece4;color:#14111f}
 #ep{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
 #wrap{position:relative;height:var(--h);aspect-ratio:9/16;border-radius:0;overflow:hidden;background:#000;box-shadow:0 12px 40px #0008}
 #wrap:fullscreen{width:100%;height:100%;aspect-ratio:auto;border-radius:0}
-#sc{flex:1;min-width:140px;accent-color:#b9a6e8}
+#sc{flex:1;min-width:0;accent-color:#b9a6e8}
 #speed{font:inherit;font-weight:700;color:var(--ink);background:var(--btn);border:2px solid #4b4260;border-radius:999px;padding:5px 10px}
 #tabs{display:flex;gap:8px;justify-content:center}
 #sub{width:max(var(--w),min(96vw,560px));min-height:3.4em;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(1.05rem,2.2vw,1.4rem);font-weight:700;line-height:1.35;padding:8px 18px;border-radius:14px;background:#0006;color:#fff3bd}
