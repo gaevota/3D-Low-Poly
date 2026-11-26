@@ -72,6 +72,7 @@ function sceneAt(t){let s=SCENES[0];for(const c of SCENES)if(t>=c.t0)s=c;return 
 // at(n,d) = instante que fica d segundos depois do início da cena n (at(n) = início da cena n).
 // Todos os tempos internos das animações usam at(): mover o t0 de uma cena move tudo junto.
 const at=(n,d=0)=>Math.round((SCENES[n-1].t0+d)*1000)/1000;
+const T_BRILHO=at(2,3.05); // instante em que o magnetron começa a piscar em amarelo (cena 2)
 const T_WAVES=at(2,4.95); // instante em que as micro-ondas começam a sair do magnetron
 
 /* ===== MOTOR 3D (WebGL próprio, sem bibliotecas) ===== */
@@ -542,7 +543,7 @@ function drawMicrowave(t,sc){
   const topA=t<at(2,0.2)?1:t<at(2,0.7)?1-(t-at(2,0.2))/.5:0;
   const door=t<at(2)?0:t<at(2,1.15)?Math.PI*.58*sm((t-at(2))/1.1):Math.PI*.58;
   const doorA=t<at(3)?1:0; const panelOff=t<at(2,0.5)?0:sm((t-at(2,0.5))/.8);const panelA=t<at(3)?(panelOff<1?1:0):0;
-  const glow=t>at(2,3.05)&&t<at(3)?.6+.4*Math.sin(t*7):0;
+  const glow=t>T_BRILHO&&t<at(3)?.6+.4*Math.sin(t*7):0;
   const showElec=t>=at(2,0.4);
   // door closed in scene 1 drawn at angle 0
   const doorAng=t<at(3)?door:0;
@@ -676,10 +677,13 @@ function somDosPassos(antes,agora){
  if(agora<=antes||agora-antes>.5)return;                      // voltar ou pular no vídeo não faz som
  const andando=(agora>=at(2,-1)&&agora<at(2))||(agora>=at(13,.07)&&agora<at(13,1.1));
  if(andando&&passada(agora)!==passada(antes)&&window.tocarPasso)window.tocarPasso()}
-// um som cada vez que uma etiqueta (tabela TAGS) aparece com o vídeo rodando
+// sons com o vídeo rodando: cada etiqueta (tabela TAGS) que aparece; e um destaque quando o magnetron começa a piscar em
+// amarelo (T_BRILHO) e quando aparecem os sinais + e − (tabela CHG; sinais que aparecem juntos tocam um som só)
 function somDasEtiquetas(antes,agora){
  if(agora<=antes||agora-antes>.5)return;                      // voltar ou pular no vídeo não faz som
- for(const c of TAGS)if(antes<c.t0&&agora>=c.t0&&window.tocarEtiqueta)window.tocarEtiqueta()}
+ const chegou=t0=>antes<t0&&agora>=t0;
+ for(const c of TAGS)if(chegou(c.t0)&&window.tocarEtiqueta)window.tocarEtiqueta();
+ for(const t0 of new Set([T_BRILHO,...CHG.map(c=>c.t0)]))if(chegou(t0)&&window.tocarDestaque)window.tocarDestaque()}
 function loop(n){if(playing){const antes=PT;PT+=Math.min(.1,(n-lastN)/1000)*speed;lastN=n;
   if(au.src&&!au.paused&&Number.isFinite(au.currentTime))PT=clamp(au.currentTime+(+$('#off').value),0,TOT);
   somDosPassos(antes,PT);somDasEtiquetas(antes,PT);
