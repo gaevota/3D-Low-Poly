@@ -15,8 +15,8 @@ var camYaw = 0, camPitch = 0.4;
              (camPitch de ORBIT_MIN até PITCH_MAX); as setas andam como W A S D.
    Vista 2 = vista da sala: abaixo de ORBIT_MIN a câmera fica baixa e só inclina o olhar para
              cima (até PITCH_MIN), para ver as paredes, o teto e a lâmpada.
-   Vista 3 = primeira pessoa: a câmera fica na altura dos olhos da personagem (só a cabeça some, para não
-             atrapalhar; o resto do corpo aparece) e olha para onde o mouse aponta; camPitch positivo = olhar para baixo. */
+   Vista 3 = primeira pessoa: a câmera fica na altura dos olhos da personagem (que some, para não
+             atrapalhar) e olha para onde o mouse aponta; camPitch positivo = olhar para baixo. */
 var PITCH_MIN = -1.1, PITCH_MAX = 1.2, ORBIT_MIN = 0.05;
 var VIEW1_PITCH = 0.4, VIEW2_PITCH = -0.4, VIEW3_PITCH = 0;     /* inclinação ao trocar de vista */
 var EYE_Y = 8.0;                               /* altura dos olhos na vista 3 (a cabeça fica em y = 7,92) */
@@ -44,7 +44,7 @@ function setView(n) {
   document.getElementById('playHint').textContent = HINT_PLAY;
   camera.fov = n === 3 ? FOV_FIRST : FOV_ORBIT;     /* primeira pessoa precisa de um campo de visão mais aberto */
   camera.updateProjectionMatrix();
-  if (active && active.head) active.head.visible = n !== 3;   /* na primeira pessoa só a cabeça (e o cabelo) some; o resto do corpo aparece */
+  if (active && active.character) active.character.visible = n !== 3;   /* na primeira pessoa o corpo some */
 }
 function setPlayUI(on) {
   document.getElementById('viewerBtns').hidden = on;
@@ -93,7 +93,7 @@ function stopGame() {
     setFull(false);
   }
   var c = active.character;
-  if (active.head) active.head.visible = true;
+  c.visible = true;
   camera.fov = FOV_ORBIT; camera.updateProjectionMatrix();
   rig.add(c);                                /* volta para o visualizador */
   c.rotation.set(0, 0, 0);
@@ -243,8 +243,8 @@ function updatePlay(dt) {
 /* câmera do jogo: vistas 1 e 2 orbitam a personagem (terceira pessoa); a vista 3 é em primeira pessoa */
 function applyPlayCamera() {
   if (camView === 3) {                               /* primeira pessoa: nos olhos, olhando para onde camYaw/camPitch apontam */
-    var ex = clamp(pl.x - Math.sin(camYaw) * 0.3, -(ROOM_W / 2 - 0.6), ROOM_W / 2 - 0.6);   /* um pouco à frente do pescoço */
-    var ez = clamp(pl.z - Math.cos(camYaw) * 0.3, -(ROOM_D / 2 - 0.6), ROOM_D / 2 - 0.6);
+    var ex = clamp(pl.x, -(ROOM_W / 2 - 0.6), ROOM_W / 2 - 0.6);
+    var ez = clamp(pl.z, -(ROOM_D / 2 - 0.6), ROOM_D / 2 - 0.6);
     camera.position.set(ex, EYE_Y + pl.y, ez);
     camera.rotation.set(-camPitch, camYaw, 0, 'YXZ');   /* yaw 0 olha para -z, como W andando para frente */
     return;
