@@ -676,9 +676,13 @@ function somDosPassos(antes,agora){
  if(agora<=antes||agora-antes>.5)return;                      // voltar ou pular no vídeo não faz som
  const andando=(agora>=at(2,-1)&&agora<at(2))||(agora>=at(13,.07)&&agora<at(13,1.1));
  if(andando&&passada(agora)!==passada(antes)&&window.tocarPasso)window.tocarPasso()}
+// um som cada vez que uma etiqueta (tabela TAGS) aparece com o vídeo rodando
+function somDasEtiquetas(antes,agora){
+ if(agora<=antes||agora-antes>.5)return;                      // voltar ou pular no vídeo não faz som
+ for(const c of TAGS)if(antes<c.t0&&agora>=c.t0&&window.tocarEtiqueta)window.tocarEtiqueta()}
 function loop(n){if(playing){const antes=PT;PT+=Math.min(.1,(n-lastN)/1000)*speed;lastN=n;
   if(au.src&&!au.paused&&Number.isFinite(au.currentTime))PT=clamp(au.currentTime+(+$('#off').value),0,TOT);
-  somDosPassos(antes,PT);
+  somDosPassos(antes,PT);somDasEtiquetas(antes,PT);
   if(PT>=TOT){PT=TOT-.001;play(false)}frame()}requestAnimationFrame(loop)}
 $('#bPlay').onclick=()=>play(!playing);$('#bRe').onclick=()=>{seek(0);play(true)};
 $('#bPrev').onclick=()=>seek(PT-ST[si]>1?ST[si]:(ST[si-1]??0));$('#bNext').onclick=()=>seek(ST[si+1]??TOT);

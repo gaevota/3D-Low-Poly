@@ -1,4 +1,5 @@
-/* sons.js — sons do episódio: botões e links (audio/botoes.mp3) e passos do personagem (audio/passo-3.mp3).
+/* sons.js — sons do episódio: botões e links (audio/botoes.mp3) e passos do personagem (audio/passo-3.mp3)
+   e etiquetas do vídeo (audio-videos/etiqueta.mp3).
    Um único ouvinte de clique cobre todos os botões e links da página, inclusive os criados depois pelo código.
    Arquivo que não existir é ignorado: a página fica sem som, mas funciona normalmente. */
 (function () {
@@ -21,6 +22,17 @@
   window.tocarPasso = function () {
     var s = passo.cloneNode(true);
     s.volume = PASSO_VOL;
+    var p = s.play();
+    if (p && p.catch) p.catch(function () {});
+  };
+
+  /* etiquetas do vídeo (os textos com linha): episodio.js chama quando uma delas aparece */
+  var ETIQUETA_VOL = 0.5;
+  var etiqueta = new Audio('../../audio-videos/etiqueta.mp3');
+  etiqueta.preload = 'auto';
+  window.tocarEtiqueta = function () {
+    var s = etiqueta.cloneNode(true);
+    s.volume = ETIQUETA_VOL;
     var p = s.play();
     if (p && p.catch) p.catch(function () {});
   };

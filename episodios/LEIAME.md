@@ -12,7 +12,7 @@ Cada episódio é uma pasta própria, com HTML, CSS e JS separados:
         estilo.css     estilo
         narracao.js    a narração (window.CUES): texto e tempo de cada frase
         episodio.js    cenas, câmera, motor 3D e player
-        sons.js        sons dos botões e dos passos (usa os mp3 de audio/ da página principal)
+        sons.js        sons dos botões, dos passos (audio/) e das etiquetas (audio-videos/)
         personagem-site.js  cópia do personagem da página principal (three.js), usada pelo episódio
 
 ## Como acrescentar um episódio
