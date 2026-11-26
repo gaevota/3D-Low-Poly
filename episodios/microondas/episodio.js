@@ -191,7 +191,7 @@ const C={cream:[.95,.93,.88],metal:[.78,.81,.85],metalD:[.55,.58,.63],wood:[.82,
 
 // ================= [5] PERSONAGEM E OBJETOS: personagem(), ramen(), droplet() =================
 // personagem(x,y,z,s,t,o) = o personagem da página principal (Personagem 1: cabelo 1, camiseta e shorts, cores padrão do site).
-//   x,y,z = onde ficam os PÉS (y = chão)    s = tamanho (a altura é a do antigo menino do episódio, ≈ 2,02·s)    t = tempo (s)
+//   x,y,z = onde ficam os PÉS (y = chão)    s = tamanho (altura ≈ 2,02·s·TAM, ≈ 2,02·s)    t = tempo (s)
 //   o.ry   = para onde olha (0 = de frente para o espectador; gira em torno do eixo y)
 //   o.armR / o.armL = ângulo dos braços (.12 = braço baixo; ≈ 2,6 = braço levantado, acenando)
 //   o.walk (0 a 1) = quanto ele anda      o.ph = fase do passo (ex.: t*9)
@@ -199,6 +199,7 @@ const C={cream:[.95,.93,.88],metal:[.78,.81,.85],metalD:[.55,.58,.63],wood:[.82,
 // convertida para uma malha do motor 3D do episódio; depois, a cada quadro, só se põe a pose (a mesma de js/animacao.js
 // do site: braços, mão que acena, pernas e pés) e se desenha cada peça. Para mudar roupa, cabelo ou cor: ch.setOutfit(...),
 // ch.setHair(...), PersonagemSite.setPartColor(ch,'shirt','#...') — aqui em PERS, antes do traverse.
+const TAM=1.3;   // tamanho do personagem em relação ao menino antigo (1 = mesma altura; maior = mais alto)
 const PERS=(()=>{
  if(!window.PersonagemSite){console.warn('personagem-site.js / three.js não carregou: o episódio abre sem o personagem');return null}
  const ch=PersonagemSite.createCharacter(0);
@@ -222,7 +223,7 @@ const PERS=(()=>{
   const cor=o.material.color,aceso=o.material.emissive&&o.material.emissive.getHex()>0;   // brilho do olho = sem sombreamento
   pecas.push({nome,obj:o,cor:aceso?[1,1,1]:[cor.r,cor.g,cor.b],op:aceso?{u:1}:{s:.12}});
  });
- return{ch,pecas,k:2.02/(ymax-ymin),y0:-ymin};
+ return{ch,pecas,k:TAM*2.02/(ymax-ymin),y0:-ymin};
 })();
 // Altura que o corpo sobe para o ponto mais baixo da sola ficar no chão (é a footLift() de js/animacao.js, sem a inclinação de correr).
 const FOOT_PITCH=.5;
@@ -244,7 +245,7 @@ function personagem(x,y,z,s,t,o){o=o||{};if(!PERS)return;
  ch.character.updateMatrixWorld(true);
  // ---- desenho ----
  const base=tf(T(x,y,z),RY(o.ry||0),S(s*k,s*k,s*k));
- D('cyl',tf(T(x,y,z),RY(o.ry||0),S(s,s,s),T(0,.004,.08),S(.5,.002,.35)),[0,0,0],{a:.18,u:1,dw:false});   // sombra no chão
+ D('cyl',tf(T(x,y,z),RY(o.ry||0),S(s*TAM,s*TAM,s*TAM),T(0,.004,.08),S(.5,.002,.35)),[0,0,0],{a:.18,u:1,dw:false});   // sombra no chão
  for(const p of pecas)D(p.nome,M4.mul(base,p.obj.matrixWorld.elements),p.cor,p.op);
 }
 function ramen(t,spin,o){o=o||{};const a=o.a===undefined?1:o.a;const base=tf(T(o.x,o.y,o.z),S(o.s,o.s,o.s));
@@ -555,7 +556,7 @@ function drawMicrowave(t,sc){
    const wk=sm((t-at(2,0.15))/.9),bx=lerp(BX,4.7,wk)+out*3.5,bz=lerp(BZ,.5,wk);o.ry=lerp(-1.75,-1.3,wk);
    const andando=(wk>0&&wk<1)||(out>0&&out<1);o.walk=andando?1:0;o.ph=t*9;   // anda (pernas e braços) enquanto se desloca
    personagem(bx,FLR,bz,BSC,t,o);
-   const hp=toScreen([bx,1.9,bz]);bubble.style.left=hp[0]+'px';bubble.style.top=hp[1]+'px';const bo=clamp((t-at(1,0.3))/.3)*clamp((at(2,0.55)-t)/.3);bubble.style.opacity=bo;bubble.style.transform=`translate(-50%,-50%) scale(${.6+.4*bo})`;}
+   const hp=toScreen([bx,FLR+2.02*BSC*TAM+.46,bz]);bubble.style.left=hp[0]+'px';bubble.style.top=hp[1]+'px';const bo=clamp((t-at(1,0.3))/.3)*clamp((at(2,0.55)-t)/.3);bubble.style.opacity=bo;bubble.style.transform=`translate(-50%,-50%) scale(${.6+.4*bo})`;}
   else bubble.style.opacity=0;
   if(sc===4||t>=at(4,0.29)){ // water droplets rising from the bowl
    const dr=rng(5);for(let i=0;i<16;i++){const an=dr()*6.28,rad=Math.sqrt(dr())*.55,ph=dr();const age=((t*.32+ph)%1);const a=Math.sin(Math.PI*age)*clamp((t-at(4,0.39))/.6);
