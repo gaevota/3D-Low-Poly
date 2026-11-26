@@ -19,7 +19,7 @@ Cada episódio é uma pasta própria, com HTML, CSS e JS separados:
 
 1. Copie a pasta `microondas/` com o nome do novo episódio (ex.: `episodios/arco-iris/`).
 2. Troque a narração em `narracao.js`, as cenas em `episodio.js` (tabela `SCENES`) e o título em `index.html`.
-3. Em `lista.js`, copie o item do episódio 1 e ajuste `n`, `titulo`, `resumo`, `duracao`, `emoji` e `pasta`.
+3. Em `lista.js`, copie o item do episódio 1 e ajuste `n`, `titulo`, `resumo`, `duracao` e `pasta`.
 
 Cada episódio usa só os próprios arquivos (nada compartilhado), então mexer em um não quebra os outros.
 

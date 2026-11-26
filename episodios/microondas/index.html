@@ -6,8 +6,8 @@
 <link rel="stylesheet" href="estilo.css">
 </head><body>
 <a class="voltar" href="../index.html">← Episódios</a>
-<h1>🍜 Como o micro-ondas esquenta a comida? <small style="opacity:.6">(0:00–1:11 · protótipo 3D completo)</small></h1>
-<div id="tabs"><button id="tAnim" class="on">🎬 Animação</button><button id="tNar">📝 Narração</button></div>
+<h1>Como o micro-ondas esquenta a comida? <small style="opacity:.6">(0:00–1:11 · protótipo 3D completo)</small></h1>
+<div id="tabs"><button id="tAnim" class="on">Animação</button><button id="tNar">Narração</button></div>
 <div id="ep">
 <div id="wrap"><div id="stage"><div id="bg"></div><canvas id="c" width="1080" height="1920"></canvas><div id="ov"></div><div id="dip"></div></div></div>
 <div class="row" id="bar">
@@ -16,9 +16,9 @@
 <label for="speed">Velocidade:</label><select id="speed" aria-label="Velocidade da animação"><option value="0.5">0,5×</option><option value="0.75">0,75×</option><option value="1" selected>1×</option><option value="1.25">1,25×</option><option value="1.5">1,5×</option><option value="2">2×</option></select>
 </div>
 <div id="sub"></div>
-<div style="width:max(var(--w),min(96vw,560px));font-weight:700;font-size:1rem;opacity:.9">🎞 Cenas <span style="font-weight:400;opacity:.7">— clique no número para ir até a cena</span></div>
+<div style="width:max(var(--w),min(96vw,560px));font-weight:700;font-size:1rem;opacity:.9">Cenas <span style="font-weight:400;opacity:.7">— clique no número para ir até a cena</span></div>
 <div class="row" id="scenes"></div>
-<div class="row" style="font-size:.9rem;opacity:.85"><label>🎙 Narração: <input type="file" id="af" accept="audio/*"></label><label>começa em (s) <input type="number" id="off" value="0" min="0" step="0.1" style="width:80px"></label><label><input type="checkbox" id="capOn" checked> legenda no vídeo</label><button id="bFs">⛶ Tela cheia</button></div>
+<div class="row" style="font-size:.9rem;opacity:.85"><label>Narração: <input type="file" id="af" accept="audio/*"></label><label>começa em (s) <input type="number" id="off" value="0" min="0" step="0.1" style="width:80px"></label><label><input type="checkbox" id="capOn" checked> legenda no vídeo</label><button id="bFs">⛶ Tela cheia</button></div>
 <audio id="au"></audio>
 </div>
 <div id="narPanel"><div id="narBar"><button id="nPlay">▶ Reproduzir</button><span id="nTc">0:00</span><input type="text" id="nQ" placeholder="🔎 buscar na narração..."><label style="font-size:.9rem"><input type="checkbox" id="nFollow" checked> acompanhar</label><button id="nCopy">📋 Copiar texto</button></div><div id="narList"></div></div>

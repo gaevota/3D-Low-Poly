@@ -7,7 +7,6 @@
     a.className = 'episodio';
     a.href = ep.pasta + '/index.html';
     a.innerHTML = '<span class="num">' + ep.n + '</span>' +
-      '<span class="emoji" aria-hidden="true">' + ep.emoji + '</span>' +
       '<span class="info"><strong></strong><span class="resumo"></span></span>' +
       '<span class="dur"></span>';
     a.querySelector('strong').textContent = ep.titulo;

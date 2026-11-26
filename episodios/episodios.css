@@ -35,7 +35,6 @@ h1 { margin: 0; font: 600 1.45rem/1.15 var(--font-display); }
 }
 .episodio:hover, .episodio:focus-visible { border-color: var(--accent); }
 .num { font: 600 1.6rem/1 var(--font-display); color: var(--accent); min-width: 1.4em; text-align: center; }
-.emoji { font-size: 1.8rem; }
 .info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .info strong { font: 600 1.05rem/1.25 var(--font-display); }
 .resumo { color: var(--muted); }
