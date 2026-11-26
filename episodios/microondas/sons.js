@@ -27,7 +27,7 @@
   };
 
   /* etiquetas do vídeo (os textos com linha): episodio.js chama quando uma delas aparece */
-  var ETIQUETA_VOL = 0.5;
+  var ETIQUETA_VOL = 0.25;
   var etiqueta = new Audio('../../audio-videos/etiqueta.mp3');
   etiqueta.preload = 'auto';
   window.tocarEtiqueta = function () {
