@@ -1,6 +1,6 @@
 /* sons.js — sons do episódio: botões e links (audio/botoes.mp3) e passos do personagem (audio/passo-3.mp3)
-   etiquetas do vídeo (audio/botoes.mp3)
-   e destaques: magnetron e sinais + e − (audio-videos/etiqueta.mp3).
+   etiquetas do vídeo (audio-videos/etiqueta.mp3)
+   e destaques: magnetron e sinais + e − (audio-videos/plim.mp3).
    Um único ouvinte de clique cobre todos os botões e links da página, inclusive os criados depois pelo código.
    Arquivo que não existir é ignorado: a página fica sem som, mas funciona normalmente. */
 (function () {
@@ -40,10 +40,10 @@
       if (p && p.catch) p.catch(function () {});
     };
   }
-  /* etiquetas (os textos com linha): o mesmo som dos botões */
-  window.tocarEtiqueta = somDoVideo('../../audio/botoes.mp3', 0.4, 0.1);
+  /* etiquetas (os textos com linha): tocam toda vez que uma etiqueta aparece */
+  window.tocarEtiqueta = somDoVideo('../../audio-videos/etiqueta.mp3', 0.4, 0);
   /* magnetron começando a piscar em amarelo e sinais + e − da molécula */
-  window.tocarDestaque = somDoVideo('../../audio-videos/etiqueta.mp3', 0.25, 0);
+  window.tocarDestaque = somDoVideo('../../audio-videos/plim.mp3', 0.25, 0);
 
   document.addEventListener('click', function (e) {
     var el = e.target.closest && e.target.closest('button, a[href]');
